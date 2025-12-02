@@ -1,6 +1,6 @@
-# Time Banking Skill Platform
+# Time Banking Skill Platform (Wibi)
 
-Platform peer-to-peer skill exchange untuk pelajar menggunakan sistem Time Banking.
+Platform peer-to-peer skill exchange untuk pelajar menggunakan sistem Time Banking (Wibi).
 
 ## 🎯 Konsep
 
@@ -13,7 +13,7 @@ Platform peer-to-peer skill exchange untuk pelajar menggunakan sistem Time Banki
 ## 🛠️ Tech Stack
 
 ### Frontend
-- **Framework**: Next.js 14 (App Router)
+- **Framework**: Next.js 16 (App Router)
 - **Language**: TypeScript
 - **Styling**: Tailwind CSS
 - **UI Components**: shadcn/ui
