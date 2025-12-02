@@ -1,6 +1,6 @@
-# Time Banking Skill Platform
+# Time Banking Skill Platform (Wibi)
 
-Platform peer-to-peer skill exchange untuk pelajar menggunakan sistem Time Banking.
+Platform peer-to-peer skill exchange untuk pelajar menggunakan sistem Time Banking (Wibi).
 
 ## 🎯 Konsep
 
