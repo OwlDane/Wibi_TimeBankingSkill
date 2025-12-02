@@ -7,6 +7,16 @@ import (
   "gorm.io/gorm"
 )
 
+// UserRepositoryInterface defines the contract for user repository
+type UserRepositoryInterface interface {
+  Create(user *models.User) error
+  GetByID(id uint) (*models.User, error)
+  GetByEmail(email string) (*models.User, error)
+  GetByUsername(username string) (*models.User, error)
+  Update(user *models.User) error
+  Delete(id uint) error
+}
+
 // UserRepository handles database operations for users
 type UserRepository struct {
   db *gorm.DB
@@ -22,17 +32,19 @@ func (r *UserRepository) Create(user *models.User) error {
   return r.db.Create(user).Error
 }
 
-// FindByID finds a user by ID
-func (r *UserRepository) FindByID(id uint) (*models.User, error) {
+// GetByID finds a user by ID (implements interface)
+func (r *UserRepository) GetByID(id uint) (*models.User, error) {
   var user models.User
   err := r.db.First(&user, id).Error
   if err != nil {
-    if errors.Is(err, gorm.ErrRecordNotFound) {
-      return nil, errors.New("user not found")
-    }
     return nil, err
   }
   return &user, nil
+}
+
+// FindByID finds a user by ID (legacy method)
+func (r *UserRepository) FindByID(id uint) (*models.User, error) {
+  return r.GetByID(id)
 }
 
 // FindByEmail finds a user by email
@@ -48,17 +60,29 @@ func (r *UserRepository) FindByEmail(email string) (*models.User, error) {
   return &user, nil
 }
 
-// FindByUsername finds a user by username
-func (r *UserRepository) FindByUsername(username string) (*models.User, error) {
+// GetByEmail finds a user by email (implements interface)
+func (r *UserRepository) GetByEmail(email string) (*models.User, error) {
   var user models.User
-  err := r.db.Where("username = ?", username).First(&user).Error
+  err := r.db.Where("email = ?", email).First(&user).Error
   if err != nil {
-    if errors.Is(err, gorm.ErrRecordNotFound) {
-      return nil, errors.New("user not found")
-    }
     return nil, err
   }
   return &user, nil
+}
+
+// GetByUsername finds a user by username (implements interface)
+func (r *UserRepository) GetByUsername(username string) (*models.User, error) {
+  var user models.User
+  err := r.db.Where("username = ?", username).First(&user).Error
+  if err != nil {
+    return nil, err
+  }
+  return &user, nil
+}
+
+// FindByUsername finds a user by username (legacy method)
+func (r *UserRepository) FindByUsername(username string) (*models.User, error) {
+  return r.GetByUsername(username)
 }
 
 // Update updates a user
