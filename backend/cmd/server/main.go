@@ -25,15 +25,15 @@ func main() {
 	}
 	defer database.Close()
 
-	// Run migrations
-	if err := database.AutoMigrate(); err != nil {
-		log.Fatalf("❌ Failed to run migrations: %v", err)
-	}
+	// // Run migrations
+	// if err := database.AutoMigrate(); err != nil {
+	// 	log.Fatalf("❌ Failed to run migrations: %v", err)
+	// }
 
-	// Seed initial data (skills, badges)
-	if err := database.SeedInitialData(); err != nil {
-		log.Printf("⚠️  Warning: Failed to seed data: %v", err)
-	}
+	// // Seed initial data (skills, badges)
+	// if err := database.SeedInitialData(); err != nil {
+	// 	log.Printf("⚠️  Warning: Failed to seed data: %v", err)
+	// }
 
 	// Initialize Gin router
 	router := gin.Default()

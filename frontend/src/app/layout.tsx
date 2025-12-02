@@ -17,9 +17,6 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "Time Banking Skill Platform",
   description: "Platform peer-to-peer skill exchange untuk pelajar menggunakan sistem Time Banking",
-  icons: {
-    icon: '/logo.svg',
-  },
 };
 
 export default function RootLayout({
