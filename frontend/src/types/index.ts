@@ -44,6 +44,26 @@ export interface UserProfile {
     credit_balance: number;
     is_active: boolean;
     is_verified: boolean;
+    total_earned: number;
+    total_spent: number;
+    total_sessions_as_teacher: number;
+    total_sessions_as_student: number;
+    average_rating_as_teacher: number;
+    average_rating_as_student: number;
+    created_at: string;
+    updated_at: string;
+}
+
+export interface UserStats {
+    credit_balance: number;
+    total_credits_earned: number;
+    total_credits_spent: number;
+    total_sessions_as_teacher: number;
+    total_sessions_as_student: number;
+    average_rating_as_teacher: number;
+    average_rating_as_student: number;
+    total_teaching_hours: number;
+    total_learning_hours: number;
 }
 
 // Skill Types
@@ -74,6 +94,7 @@ export interface UserSkill {
     user_id: number;
     skill_id: number;
     skill: Skill;
+    user?: UserProfile;
     level: SkillLevel;
     description: string;
     years_of_experience: number;
@@ -224,8 +245,46 @@ export interface Review {
     updated_at: string;
 }
 
+// Session Request Types
+export interface CreateSessionRequest {
+    user_skill_id: number;
+    title: string;
+    description: string;
+    duration: number;
+    mode: SessionMode;
+    scheduled_at: string;
+    location?: string;
+    meeting_link?: string;
+}
+
+export interface ApproveSessionRequest {
+    scheduled_at?: string;
+    meeting_link?: string;
+    location?: string;
+    notes?: string;
+}
+
+export interface RejectSessionRequest {
+    reason: string;
+}
+
+export interface CancelSessionRequest {
+    reason: string;
+}
+
+export interface CompleteSessionRequest {
+    notes?: string;
+}
+
+export interface SessionListResponse {
+    sessions: Session[];
+    total: number;
+    page: number;
+    limit: number;
+}
+
 // Transaction Types
-export type TransactionType = 'earned' | 'spent' | 'bonus' | 'refund' | 'penalty' | 'initial';
+export type TransactionType = 'earned' | 'spent' | 'bonus' | 'refund' | 'penalty' | 'initial' | 'hold';
 
 export interface Transaction {
     id: number;
