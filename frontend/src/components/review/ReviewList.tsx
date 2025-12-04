@@ -8,22 +8,7 @@ import { Loader2, Trash2, Edit2 } from 'lucide-react'
 import { useReviewStore } from '@/stores'
 import { toast } from 'sonner'
 import type { Review } from '@/types'
-
-/**
- * Format date to relative time (e.g., "2 days ago")
- */
-function formatRelativeTime(dateString: string): string {
-    const date = new Date(dateString)
-    const now = new Date()
-    const seconds = Math.floor((now.getTime() - date.getTime()) / 1000)
-
-    if (seconds < 60) return 'just now'
-    if (seconds < 3600) return `${Math.floor(seconds / 60)}m ago`
-    if (seconds < 86400) return `${Math.floor(seconds / 3600)}h ago`
-    if (seconds < 604800) return `${Math.floor(seconds / 86400)}d ago`
-    if (seconds < 2592000) return `${Math.floor(seconds / 604800)}w ago`
-    return date.toLocaleDateString()
-}
+import { formatDistanceToNow } from 'date-fns'
 
 interface ReviewListProps {
     userId: number;
@@ -252,7 +237,7 @@ function ReviewCard({ review, onDelete }: { review: Review; onDelete: (id: numbe
 
                 {/* Metadata */}
                 <div className="flex items-center justify-between text-xs text-muted-foreground pt-2 border-t">
-                    <span>{formatRelativeTime(review.created_at)}</span>
+                    <span>{formatDistanceToNow(new Date(review.created_at), { addSuffix: true })}</span>
                     {review.helpful_count > 0 && (
                         <span>👍 {review.helpful_count} found this helpful</span>
                     )}
