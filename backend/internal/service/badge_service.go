@@ -162,7 +162,7 @@ func (s *BadgeService) qualifiesForBadge(user *models.User, requirements map[str
 
 	// Check credits requirement
 	if creditsReq, ok := requirements["credits_earned"].(float64); ok {
-		if user.TotalEarned < int(creditsReq) {
+		if int(user.TotalEarned) < int(creditsReq) {
 			return false
 		}
 	}
@@ -244,19 +244,55 @@ func (s *BadgeService) GetSessionLeaderboard(limit int) ([]dto.LeaderboardEntry,
 		limit = 10
 	}
 
-	users, err := s.userRepo.GetTopUsersBySessionCount(limit)
+	// Get all users
+	users, err := s.userRepo.GetAll()
 	if err != nil {
-		return nil, fmt.Errorf("failed to fetch leaderboard: %w", err)
+		return nil, fmt.Errorf("failed to fetch users: %w", err)
 	}
 
-	var leaderboard []dto.LeaderboardEntry
+	// Create map of user session counts
+	type userSessionCount struct {
+		User  models.User
+		Count int64
+	}
+	var userCounts []userSessionCount
+
 	for _, user := range users {
+		// Count sessions as teacher
+		teacherCount, _ := s.sessionRepo.CountUserSessionsAsTeacher(user.ID)
+		// Count sessions as student
+		studentCount, _ := s.sessionRepo.CountUserSessionsAsStudent(user.ID)
+		totalCount := teacherCount + studentCount
+
+		if totalCount > 0 {
+			userCounts = append(userCounts, userSessionCount{
+				User:  user,
+				Count: totalCount,
+			})
+		}
+	}
+
+	// Sort by session count (descending)
+	for i := 0; i < len(userCounts); i++ {
+		for j := i + 1; j < len(userCounts); j++ {
+			if userCounts[j].Count > userCounts[i].Count {
+				userCounts[i], userCounts[j] = userCounts[j], userCounts[i]
+			}
+		}
+	}
+
+	// Build leaderboard
+	var leaderboard []dto.LeaderboardEntry
+	for i, uc := range userCounts {
+		if i >= limit {
+			break
+		}
 		leaderboard = append(leaderboard, dto.LeaderboardEntry{
-			UserID:    user.ID,
-			Username:  user.Username,
-			FullName:  user.FullName,
-			Avatar:    user.Avatar,
-			Score:     user.TotalSessionsAsTeacher + user.TotalSessionsAsStudent,
+			UserID:    uc.User.ID,
+			Username:  uc.User.Username,
+			FullName:  uc.User.FullName,
+			Avatar:    uc.User.Avatar,
+			Score:     int(uc.Count),
 			ScoreType: "sessions",
 		})
 	}
@@ -270,20 +306,50 @@ func (s *BadgeService) GetRatingLeaderboard(limit int) ([]dto.LeaderboardEntry, 
 		limit = 10
 	}
 
-	users, err := s.userRepo.GetTopUsersByRating(limit)
+	// Get all users
+	users, err := s.userRepo.GetAll()
 	if err != nil {
-		return nil, fmt.Errorf("failed to fetch leaderboard: %w", err)
+		return nil, fmt.Errorf("failed to fetch users: %w", err)
 	}
 
-	var leaderboard []dto.LeaderboardEntry
+	// Create map of user ratings
+	type userRating struct {
+		User      models.User
+		AvgRating float64
+	}
+	var userRatings []userRating
+
 	for _, user := range users {
 		avgRating := (user.AverageRatingAsTeacher + user.AverageRatingAsStudent) / 2
+		if avgRating > 0 {
+			userRatings = append(userRatings, userRating{
+				User:      user,
+				AvgRating: avgRating,
+			})
+		}
+	}
+
+	// Sort by rating (descending)
+	for i := 0; i < len(userRatings); i++ {
+		for j := i + 1; j < len(userRatings); j++ {
+			if userRatings[j].AvgRating > userRatings[i].AvgRating {
+				userRatings[i], userRatings[j] = userRatings[j], userRatings[i]
+			}
+		}
+	}
+
+	// Build leaderboard
+	var leaderboard []dto.LeaderboardEntry
+	for i, ur := range userRatings {
+		if i >= limit {
+			break
+		}
 		leaderboard = append(leaderboard, dto.LeaderboardEntry{
-			UserID:    user.ID,
-			Username:  user.Username,
-			FullName:  user.FullName,
-			Avatar:    user.Avatar,
-			Score:     int(avgRating * 100), // Store as integer (e.g., 450 = 4.5)
+			UserID:    ur.User.ID,
+			Username:  ur.User.Username,
+			FullName:  ur.User.FullName,
+			Avatar:    ur.User.Avatar,
+			Score:     int(ur.AvgRating * 100), // Store as integer (e.g., 450 = 4.5)
 			ScoreType: "rating",
 		})
 	}
@@ -297,19 +363,49 @@ func (s *BadgeService) GetCreditLeaderboard(limit int) ([]dto.LeaderboardEntry, 
 		limit = 10
 	}
 
-	users, err := s.userRepo.GetTopUsersByCreditsEarned(limit)
+	// Get all users
+	users, err := s.userRepo.GetAll()
 	if err != nil {
-		return nil, fmt.Errorf("failed to fetch leaderboard: %w", err)
+		return nil, fmt.Errorf("failed to fetch users: %w", err)
 	}
 
-	var leaderboard []dto.LeaderboardEntry
+	// Create map of user credits
+	type userCredit struct {
+		User   models.User
+		Credit int
+	}
+	var userCredits []userCredit
+
 	for _, user := range users {
+		if user.TotalEarned > 0 {
+			userCredits = append(userCredits, userCredit{
+				User:   user,
+				Credit: int(user.TotalEarned),
+			})
+		}
+	}
+
+	// Sort by credits (descending)
+	for i := 0; i < len(userCredits); i++ {
+		for j := i + 1; j < len(userCredits); j++ {
+			if userCredits[j].Credit > userCredits[i].Credit {
+				userCredits[i], userCredits[j] = userCredits[j], userCredits[i]
+			}
+		}
+	}
+
+	// Build leaderboard
+	var leaderboard []dto.LeaderboardEntry
+	for i, uc := range userCredits {
+		if i >= limit {
+			break
+		}
 		leaderboard = append(leaderboard, dto.LeaderboardEntry{
-			UserID:    user.ID,
-			Username:  user.Username,
-			FullName:  user.FullName,
-			Avatar:    user.Avatar,
-			Score:     user.TotalEarned,
+			UserID:    uc.User.ID,
+			Username:  uc.User.Username,
+			FullName:  uc.User.FullName,
+			Avatar:    uc.User.Avatar,
+			Score:     uc.Credit,
 			ScoreType: "credits",
 		})
 	}

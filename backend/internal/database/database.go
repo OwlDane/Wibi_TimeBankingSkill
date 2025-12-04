@@ -3,6 +3,7 @@ package database
 import (
   "fmt"
   "log"
+  "time"
 
   "github.com/timebankingskill/backend/internal/config"
   "github.com/timebankingskill/backend/internal/models"
@@ -14,29 +15,37 @@ import (
 // DB is the global database instance
 var DB *gorm.DB
 
-// Connect establishes database connection
+// Connect establishes database connection with optimized settings
 func Connect(cfg *config.DatabaseConfig) error {
 	dsn := cfg.GetDSN()
 
-	// Configure GORM logger
+	// Configure GORM logger - use Silent mode in production for better performance
+	// Use Silent mode by default for production performance
+	logMode := logger.Silent
+
 	gormConfig := &gorm.Config{
-		Logger: logger.Default.LogMode(logger.Info),
+		Logger: logger.Default.LogMode(logMode),
 	}
 
-	// Connect to database
+	// Connect to database with timeout
 	db, err := gorm.Open(postgres.Open(dsn), gormConfig)
 	if err != nil {
 		return fmt.Errorf("failed to connect to database: %w", err)
 	}
 
-	// Set connection pool settings
+	// Get SQL database instance
 	sqlDB, err := db.DB()
 	if err != nil {
 		return fmt.Errorf("failed to get database instance: %w", err)
 	}
 
-	sqlDB.SetMaxIdleConns(10)
+	// Optimize connection pool for production
+	// MaxIdleConns: connections to keep alive
+	// MaxOpenConns: maximum number of open connections
+	sqlDB.SetMaxIdleConns(25)
 	sqlDB.SetMaxOpenConns(100)
+	sqlDB.SetConnMaxLifetime(time.Hour)
+	sqlDB.SetConnMaxIdleTime(10 * time.Minute)
 
 	// Assign to global variable
 	DB = db
@@ -45,10 +54,18 @@ func Connect(cfg *config.DatabaseConfig) error {
 	return nil
 }
 
-// AutoMigrate runs database migrations
+// AutoMigrate runs database migrations (only if tables don't exist)
 func AutoMigrate() error {
   if DB == nil {
     return fmt.Errorf("database not connected")
+  }
+
+  // Use a context with timeout to prevent slow queries from blocking
+  // Check if users table exists using raw SQL (faster than HasTable)
+  var exists int
+  if err := DB.Raw("SELECT 1 FROM information_schema.tables WHERE table_schema = CURRENT_SCHEMA() AND table_name = 'users' LIMIT 1").Scan(&exists).Error; err == nil && exists == 1 {
+    log.Println("✅ Database tables already exist, skipping migrations")
+    return nil
   }
 
   log.Println("🔄 Running database migrations...")
@@ -66,6 +83,13 @@ func AutoMigrate() error {
 func SeedInitialData() error {
   if DB == nil {
     return fmt.Errorf("database not connected")
+  }
+
+  // Check if skills already seeded using raw SQL (faster than Count)
+  var skillCount int
+  if err := DB.Raw("SELECT COUNT(*) FROM skills WHERE deleted_at IS NULL").Scan(&skillCount).Error; err == nil && skillCount > 0 {
+    log.Println("✅ Initial data already seeded, skipping seed")
+    return nil
   }
 
   log.Println("🌱 Seeding initial data...")

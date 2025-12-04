@@ -1,6 +1,8 @@
 package repository
 
 import (
+	"time"
+
 	"github.com/timebankingskill/backend/internal/models"
 	"gorm.io/gorm"
 )
@@ -90,7 +92,7 @@ func (r *BadgeRepository) AwardBadge(userID, badgeID uint) (*models.UserBadge, e
 	userBadge := &models.UserBadge{
 		UserID:   userID,
 		BadgeID:  badgeID,
-		EarnedAt: gorm.NowFunc(),
+		EarnedAt: time.Now(),
 	}
 	err := r.db.Create(userBadge).Error
 	if err != nil {

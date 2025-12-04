@@ -134,14 +134,14 @@ func (h *BadgeHandler) CheckAndAwardBadges(c *gin.Context) {
 // PinBadge pins/unpins a badge for the user
 // POST /api/v1/user/badges/:id/pin
 func (h *BadgeHandler) PinBadge(c *gin.Context) {
-	userID, ok := getUserID(c)
+	_, ok := getUserID(c)
 	if !ok {
 		utils.SendError(c, http.StatusUnauthorized, "Unauthorized", nil)
 		return
 	}
 
 	badgeIDStr := c.Param("id")
-	badgeID, err := strconv.ParseUint(badgeIDStr, 10, 32)
+	_, err := strconv.ParseUint(badgeIDStr, 10, 32)
 	if err != nil {
 		utils.SendError(c, http.StatusBadRequest, "Invalid badge ID", err)
 		return

@@ -144,3 +144,10 @@ func (r *UserRepository) IncrementStats(userID uint, field string, value int) er
     Update(field, gorm.Expr(field+" + ?", value)).
     Error
 }
+
+// GetAll retrieves all users
+func (r *UserRepository) GetAll() ([]models.User, error) {
+  var users []models.User
+  err := r.db.Find(&users).Error
+  return users, err
+}

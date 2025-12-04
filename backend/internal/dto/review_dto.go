@@ -103,7 +103,8 @@ func MapReviewToResponse(review *models.Review) *ReviewResponse {
 func MapReviewsToResponse(reviews []models.Review) []ReviewResponse {
 	responses := make([]ReviewResponse, len(reviews))
 	for i, review := range reviews {
-		*responses[i] = *MapReviewToResponse(&review)
+		resp := MapReviewToResponse(&review)
+		responses[i] = *resp
 	}
 	return responses
 }

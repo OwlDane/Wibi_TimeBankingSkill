@@ -79,7 +79,8 @@ func MapBadgeToResponse(badge *models.Badge) *BadgeResponse {
 func MapBadgesToResponse(badges []models.Badge) []BadgeResponse {
 	responses := make([]BadgeResponse, len(badges))
 	for i, badge := range badges {
-		*responses[i] = *MapBadgeToResponse(&badge)
+		resp := MapBadgeToResponse(&badge)
+		responses[i] = *resp
 	}
 	return responses
 }
@@ -109,7 +110,8 @@ func MapUserBadgeToResponse(userBadge *models.UserBadge) *UserBadgeResponse {
 func MapUserBadgesToResponse(userBadges []models.UserBadge) []UserBadgeResponse {
 	responses := make([]UserBadgeResponse, len(userBadges))
 	for i, userBadge := range userBadges {
-		*responses[i] = *MapUserBadgeToResponse(&userBadge)
+		resp := MapUserBadgeToResponse(&userBadge)
+		responses[i] = *resp
 	}
 	return responses
 }

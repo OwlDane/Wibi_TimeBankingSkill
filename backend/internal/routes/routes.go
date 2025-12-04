@@ -41,18 +41,18 @@ func SetupRoutes(router *gin.Engine, db *gorm.DB) {
 		skills := v1.Group("/skills")
 		{
 			skills.GET("", skillHandler.GetSkills)                     // GET /api/v1/skills?limit=10&page=1&category=&search=
-			skills.GET("/:id", skillHandler.GetSkillByID)              // GET /api/v1/skills/1
 			skills.GET("/:id/teachers", skillHandler.GetSkillTeachers) // GET /api/v1/skills/1/teachers
+			skills.GET("/:id", skillHandler.GetSkillByID)              // GET /api/v1/skills/1
 		}
 
 		// Public User profiles
 		publicUsers := v1.Group("/users")
 		{
+			publicUsers.GET("/@:username", userHandler.GetPublicProfileByUsername) // GET /api/v1/users/@johndoe (must be before /:id)
 			publicUsers.GET("/:id/profile", userHandler.GetPublicProfile)          // GET /api/v1/users/1/profile
-			publicUsers.GET("/@:username", userHandler.GetPublicProfileByUsername) // GET /api/v1/users/@johndoe
-			publicUsers.GET("/:userId/reviews", reviewHandler.GetUserReviews)      // GET /api/v1/users/1/reviews
-			publicUsers.GET("/:userId/reviews/:type", reviewHandler.GetUserReviewsByType) // GET /api/v1/users/1/reviews/teacher
-			publicUsers.GET("/:userId/rating-summary", reviewHandler.GetUserRatingSummary) // GET /api/v1/users/1/rating-summary
+			publicUsers.GET("/:id/reviews", reviewHandler.GetUserReviews)          // GET /api/v1/users/1/reviews
+			publicUsers.GET("/:id/reviews/:type", reviewHandler.GetUserReviewsByType) // GET /api/v1/users/1/reviews/teacher
+			publicUsers.GET("/:id/rating-summary", reviewHandler.GetUserRatingSummary) // GET /api/v1/users/1/rating-summary
 		}
 
 		// Public Badges
