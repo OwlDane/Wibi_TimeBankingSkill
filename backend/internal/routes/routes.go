@@ -15,6 +15,7 @@ func SetupRoutes(router *gin.Engine, db *gorm.DB) {
 	transactionHandler := InitializeTransactionHandler(db)
 	sessionHandler := InitializeSessionHandler(db)
 	reviewHandler := InitializeReviewHandler(db)
+	badgeHandler := InitializeBadgeHandler(db)
 
 	// API v1 group
 	v1 := router.Group("/api/v1")
@@ -52,6 +53,23 @@ func SetupRoutes(router *gin.Engine, db *gorm.DB) {
 			publicUsers.GET("/:userId/reviews", reviewHandler.GetUserReviews)      // GET /api/v1/users/1/reviews
 			publicUsers.GET("/:userId/reviews/:type", reviewHandler.GetUserReviewsByType) // GET /api/v1/users/1/reviews/teacher
 			publicUsers.GET("/:userId/rating-summary", reviewHandler.GetUserRatingSummary) // GET /api/v1/users/1/rating-summary
+		}
+
+		// Public Badges
+		badges := v1.Group("/badges")
+		{
+			badges.GET("", badgeHandler.GetAllBadges)           // GET /api/v1/badges
+			badges.GET("/:id", badgeHandler.GetBadge)           // GET /api/v1/badges/1
+		}
+
+		// Public Leaderboards
+		leaderboards := v1.Group("/leaderboard")
+		{
+			leaderboards.GET("/badges", badgeHandler.GetBadgeLeaderboard)       // GET /api/v1/leaderboard/badges
+			leaderboards.GET("/rarity", badgeHandler.GetRarityLeaderboard)      // GET /api/v1/leaderboard/rarity
+			leaderboards.GET("/sessions", badgeHandler.GetSessionLeaderboard)   // GET /api/v1/leaderboard/sessions
+			leaderboards.GET("/rating", badgeHandler.GetRatingLeaderboard)      // GET /api/v1/leaderboard/rating
+			leaderboards.GET("/credits", badgeHandler.GetCreditLeaderboard)     // GET /api/v1/leaderboard/credits
 		}
 
 		// Protected routes (require authentication)
@@ -113,6 +131,15 @@ func SetupRoutes(router *gin.Engine, db *gorm.DB) {
 				reviews.GET("/:id", reviewHandler.GetReview)              // GET /api/v1/reviews/:id - Get a review
 				reviews.PUT("/:id", reviewHandler.UpdateReview)           // PUT /api/v1/reviews/:id - Update a review
 				reviews.DELETE("/:id", reviewHandler.DeleteReview)        // DELETE /api/v1/reviews/:id - Delete a review
+			}
+
+			// User Badges routes
+			userBadges := protected.Group("/user/badges")
+			{
+				userBadges.GET("", badgeHandler.GetUserBadges)                    // GET /api/v1/user/badges
+				userBadges.GET("/:type", badgeHandler.GetUserBadgesByType)        // GET /api/v1/user/badges/achievement
+				userBadges.POST("/check", badgeHandler.CheckAndAwardBadges)       // POST /api/v1/user/badges/check
+				userBadges.POST("/:id/pin", badgeHandler.PinBadge)                // POST /api/v1/user/badges/1/pin
 			}
 		}
 	}

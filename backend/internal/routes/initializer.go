@@ -56,3 +56,12 @@ func InitializeReviewHandler(db *gorm.DB) *handler.ReviewHandler {
 	reviewService := service.NewReviewService(reviewRepo, sessionRepo, userRepo)
 	return handler.NewReviewHandler(reviewService)
 }
+
+// InitializeBadgeHandler initializes badge handler with dependencies
+func InitializeBadgeHandler(db *gorm.DB) *handler.BadgeHandler {
+	badgeRepo := repository.NewBadgeRepository(db)
+	userRepo := repository.NewUserRepository(db)
+	sessionRepo := repository.NewSessionRepository(db)
+	badgeService := service.NewBadgeService(badgeRepo, userRepo, sessionRepo)
+	return handler.NewBadgeHandler(badgeService)
+}
