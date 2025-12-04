@@ -254,6 +254,39 @@ export interface RatingSummary {
     student_review_count: number;
 }
 
+// Badge Types
+export type BadgeType = 'achievement' | 'milestone' | 'quality' | 'special';
+
+export interface Badge {
+    id: number;
+    name: string;
+    description: string;
+    icon: string;
+    type: BadgeType;
+    requirements: string;
+    bonus_credits: number;
+    rarity: number;
+    total_awarded: number;
+    color: string;
+    is_active: boolean;
+    display_order: number;
+    created_at: string;
+    updated_at: string;
+}
+
+export interface UserBadge {
+    id: number;
+    user_id: number;
+    badge_id: number;
+    badge?: Badge;
+    earned_at: string;
+    progress: number;
+    progress_goal: number;
+    progress_percent: number;
+    is_pinned: boolean;
+    is_completed: boolean;
+}
+
 // Session Request Types
 export interface CreateSessionRequest {
     user_skill_id: number;
@@ -311,36 +344,15 @@ export interface Transaction {
     updated_at: string;
 }
 
-// Badge Types
-export type BadgeType = 'achievement' | 'milestone' | 'quality' | 'special';
-
-export interface Badge {
-    id: number;
-    name: string;
-    description: string;
-    icon: string;
-    type: BadgeType;
-    requirements: string;
-    bonus_credits: number;
-    rarity: number;
-    color: string;
-    total_awarded: number;
-    is_active: boolean;
-    display_order: number;
-    created_at: string;
-    updated_at: string;
-}
-
 export interface UserBadge {
     id: number;
     user_id: number;
     badge_id: number;
+    badge?: Badge;
     earned_at: string;
     progress: number;
     progress_goal: number;
+    progress_percent: number;
     is_pinned: boolean;
-    user?: UserProfile;
-    badge?: Badge;
-    created_at: string;
-    updated_at: string;
+    is_completed: boolean;
 }
