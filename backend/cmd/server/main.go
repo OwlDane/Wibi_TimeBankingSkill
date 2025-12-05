@@ -47,9 +47,15 @@ func main() {
   router.Use(middleware.ErrorHandler())
   // Rate limiting: 100 requests per minute per IP
   router.Use(middleware.RateLimitMiddleware(100))
+  // Monitoring: track metrics and errors
+  router.Use(middleware.MonitoringMiddleware())
 
   // Setup routes
   routes.SetupRoutes(router, database.DB)
+
+  // Add monitoring endpoints
+  router.GET("/health", middleware.HealthCheckMiddleware())
+  router.GET("/metrics", middleware.MetricsMiddleware())
 
   // Start server
   addr := fmt.Sprintf(":%s", cfg.Server.Port)
