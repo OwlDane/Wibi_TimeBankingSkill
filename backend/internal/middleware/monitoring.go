@@ -1,6 +1,7 @@
 package middleware
 
 import (
+	"sync"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -9,6 +10,8 @@ import (
 
 // RequestMetrics tracks HTTP request metrics
 type RequestMetrics struct {
+	// Mutex for thread-safe access
+	mu sync.RWMutex
 	// Total requests
 	TotalRequests int64
 	// Requests by method
@@ -119,12 +122,17 @@ func MonitoringMiddleware() gin.HandlerFunc {
 
 // updateRequestMetrics updates global request metrics
 // Tracks request counts, response times, and status codes
+// Thread-safe with mutex protection
 //
 // Parameters:
 //   - method: HTTP method
 //   - statusCode: HTTP status code
 //   - duration: Request duration
 func updateRequestMetrics(method string, statusCode int, duration time.Duration) {
+	// Lock for thread-safe map access
+	requestMetrics.mu.Lock()
+	defer requestMetrics.mu.Unlock()
+
 	requestMetrics.TotalRequests++
 	requestMetrics.RequestsByMethod[method]++
 	requestMetrics.RequestsByStatus[statusCode]++
@@ -144,15 +152,46 @@ func updateRequestMetrics(method string, statusCode int, duration time.Duration)
 
 // GetRequestMetrics returns current request metrics
 // Useful for monitoring dashboards
+// Thread-safe with read lock
 //
 // Returns:
-//   - *RequestMetrics: Current request metrics
+//   - *RequestMetrics: Copy of current request metrics
 //
 // Example:
 //   metrics := GetRequestMetrics()
 //   fmt.Printf("Total requests: %d\n", metrics.TotalRequests)
 func GetRequestMetrics() *RequestMetrics {
-	return requestMetrics
+	requestMetrics.mu.RLock()
+	defer requestMetrics.mu.RUnlock()
+
+	// Return a copy to avoid external modifications
+	return &RequestMetrics{
+		TotalRequests:     requestMetrics.TotalRequests,
+		RequestsByMethod:  copyMap(requestMetrics.RequestsByMethod),
+		RequestsByStatus:  copyStatusMap(requestMetrics.RequestsByStatus),
+		TotalResponseTime: requestMetrics.TotalResponseTime,
+		AvgResponseTime:   requestMetrics.AvgResponseTime,
+		SlowestRequest:    requestMetrics.SlowestRequest,
+		FastestRequest:    requestMetrics.FastestRequest,
+	}
+}
+
+// copyMap creates a copy of string->int64 map
+func copyMap(m map[string]int64) map[string]int64 {
+	copy := make(map[string]int64)
+	for k, v := range m {
+		copy[k] = v
+	}
+	return copy
+}
+
+// copyStatusMap creates a copy of int->int64 map
+func copyStatusMap(m map[int]int64) map[int]int64 {
+	copy := make(map[int]int64)
+	for k, v := range m {
+		copy[k] = v
+	}
+	return copy
 }
 
 // HealthCheckMiddleware provides a health check endpoint
