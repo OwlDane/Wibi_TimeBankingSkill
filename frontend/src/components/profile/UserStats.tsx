@@ -65,24 +65,26 @@ export default function UserStats() {
         title: string
         value: string | number
         subtitle?: string
-        icon: React.ElementType
+        icon: React.ComponentType<{ className?: string }>
         trend?: { value: number; isPositive: boolean }
         color?: "default" | "success" | "warning" | "danger"
         progress?: number
-    }) => (
+    }) => {
+        const iconColorClass = 
+            color === 'success' ? 'text-green-600' :
+            color === 'warning' ? 'text-yellow-600' :
+            color === 'danger' ? 'text-red-600' :
+            'text-muted-foreground'
+
+        return (
         <Card className={`${color === 'success' ? 'border-green-200' : 
-                         color === 'warning' ? 'border-yellow-200' : 
-                         color === 'danger' ? 'border-red-200' : ''}`}>
+                        color === 'warning' ? 'border-yellow-200' : 
+                        color === 'danger' ? 'border-red-200' : ''}`}>
             <CardHeader className="flex flex-row items-center justify-between pb-2">
                 <CardTitle className="text-sm font-medium text-muted-foreground">
                     {title}
                 </CardTitle>
-                <Icon className={`h-4 w-4 ${
-                    color === 'success' ? 'text-green-600' :
-                    color === 'warning' ? 'text-yellow-600' :
-                    color === 'danger' ? 'text-red-600' :
-                    'text-muted-foreground'
-                }`} />
+                <Icon className={`h-4 w-4 ${iconColorClass}`} />
             </CardHeader>
             <CardContent>
                 <div className="text-2xl font-bold">{value}</div>
@@ -113,7 +115,8 @@ export default function UserStats() {
                 )}
             </CardContent>
         </Card>
-    )
+        )
+    }
 
     // Calculate some derived stats
     const totalSessions = stats.total_sessions_as_teacher + stats.total_sessions_as_student
