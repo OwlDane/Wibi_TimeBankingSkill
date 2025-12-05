@@ -22,6 +22,7 @@ func NewSkillHandler(skillService *service.SkillService) *SkillHandler {
 }
 
 // GetSkills handles GET /api/v1/skills
+// Implements caching for frequently accessed data
 func (h *SkillHandler) GetSkills(c *gin.Context) {
 	// Parse query parameters
 	limitStr := c.DefaultQuery("limit", "10")
@@ -41,6 +42,15 @@ func (h *SkillHandler) GetSkills(c *gin.Context) {
 
 	offset := (page - 1) * limit
 
+	// Try to get from cache if no search/filter
+	cache := utils.GetCache()
+	if search == "" && category == "" && page == 1 {
+		if cached, found := cache.Get(utils.CacheKeySkills); found {
+			utils.SendSuccess(c, http.StatusOK, "Skills retrieved from cache", cached)
+			return
+		}
+	}
+
 	// Get skills from service
 	skills, total, err := h.skillService.GetAllSkills(limit, offset, category, search)
 	if err != nil {
@@ -59,6 +69,11 @@ func (h *SkillHandler) GetSkills(c *gin.Context) {
 		Total:  total,
 		Page:   page,
 		Limit:  limit,
+	}
+
+	// Cache response if no search/filter and page 1
+	if search == "" && category == "" && page == 1 {
+		cache.Set(utils.CacheKeySkills, response)
 	}
 
 	utils.SendSuccess(c, http.StatusOK, "Skills retrieved successfully", response)

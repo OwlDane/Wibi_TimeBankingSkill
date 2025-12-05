@@ -45,6 +45,8 @@ func main() {
   router.Use(middleware.Recovery())
   router.Use(middleware.CORS())
   router.Use(middleware.ErrorHandler())
+  // Rate limiting: 100 requests per minute per IP
+  router.Use(middleware.RateLimitMiddleware(100))
 
   // Setup routes
   routes.SetupRoutes(router, database.DB)
