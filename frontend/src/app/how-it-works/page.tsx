@@ -1,8 +1,56 @@
+import React from "react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import { cn } from "@/lib/utils";
+import {
+  IconClock,
+  IconHeart,
+  IconArrowsLeftRight,
+  IconCurrencyDollarOff,
+  IconEye,
+  IconUsers,
+} from "@tabler/icons-react";
 
 export default function HowItWorksPage() {
+  const features = [
+    {
+      title: "Everyone's Time is Equal",
+      description:
+        "One hour of service is worth one time credit, regardless of the service performed. Teaching calculus = teaching guitar = helping with English.",
+      icon: <IconClock />,
+    },
+    {
+      title: "Everyone Has Value",
+      description:
+        "Everyone has something to offer. Time Banking recognizes that everyone, regardless of age or background, has valuable skills to share.",
+      icon: <IconHeart />,
+    },
+    {
+      title: "Reciprocity",
+      description:
+        "Helping others is rewarded with credits that can be used to receive help in return. This creates a sustainable cycle of giving and receiving.",
+      icon: <IconArrowsLeftRight />,
+    },
+    {
+      title: "No Money Involved",
+      description: "Time Banking operates completely outside the monetary system. No cash changes hands, making skills accessible to everyone.",
+      icon: <IconCurrencyDollarOff />,
+    },
+    {
+      title: "Transparency",
+      description:
+        "All exchanges are tracked and visible. The platform provides a clear record of credits earned and spent, ensuring fairness and accountability.",
+      icon: <IconEye />,
+    },
+    {
+      title: "Community Building",
+      description:
+        "Time Banking strengthens communities by creating networks of mutual support. It connects people who might not otherwise meet and builds social capital.",
+      icon: <IconUsers />,
+    },
+  ];
+
   return (
     <div className="min-h-screen bg-background">
       {/* Header */}
@@ -58,113 +106,10 @@ export default function HowItWorksPage() {
               Time Banking is built on five core values that make it a unique and powerful system.
             </p>
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            <Card className="flex flex-col items-center text-center h-full bg-card/50 border-border/50 hover:border-primary/30 transition-colors">
-              <CardHeader className="pb-4 flex flex-col items-center">
-                <div className="flex h-14 w-14 items-center justify-center rounded-xl bg-primary/10 mb-4">
-                  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-7 w-7 text-primary">
-                    <circle cx="12" cy="12" r="10" />
-                    <path d="m9 12 2 2 4-4" />
-                  </svg>
-                </div>
-                <CardTitle className="text-lg">Everyone's Time is Equal</CardTitle>
-              </CardHeader>
-              <CardContent className="pt-0 flex-1">
-                <p className="text-muted-foreground text-sm leading-relaxed">
-                  One hour of service is worth one time credit, regardless of the service performed. 
-                  Teaching calculus = teaching guitar = helping with English.
-                </p>
-              </CardContent>
-            </Card>
-            <Card className="flex flex-col items-center text-center h-full bg-card/50 border-border/50 hover:border-primary/30 transition-colors">
-              <CardHeader className="pb-4 flex flex-col items-center">
-                <div className="flex h-14 w-14 items-center justify-center rounded-xl bg-primary/10 mb-4">
-                  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-7 w-7 text-primary">
-                    <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
-                    <circle cx="9" cy="7" r="4" />
-                    <path d="M22 21v-2a4 4 0 0 0-3-3.87" />
-                    <path d="M16 3.13a4 4 0 0 1 0 7.75" />
-                  </svg>
-                </div>
-                <CardTitle className="text-lg">Everyone Has Value</CardTitle>
-              </CardHeader>
-              <CardContent className="pt-0 flex-1">
-                <p className="text-muted-foreground text-sm leading-relaxed">
-                  Everyone has something to offer. Time Banking recognizes that everyone, 
-                  regardless of age or background, has valuable skills to share.
-                </p>
-              </CardContent>
-            </Card>
-            <Card className="flex flex-col items-center text-center h-full bg-card/50 border-border/50 hover:border-primary/30 transition-colors">
-              <CardHeader className="pb-4 flex flex-col items-center">
-                <div className="flex h-14 w-14 items-center justify-center rounded-xl bg-primary/10 mb-4">
-                  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-7 w-7 text-primary">
-                    <path d="M8.7 3A6 6 0 0 1 18 8a21.3 21.3 0 0 0 .6 5" />
-                    <path d="M17 17H3s3-2 3-9a4.67 4.67 0 0 1 .3-1.7" />
-                    <path d="M10.3 21a1.94 1.94 0 0 0 3.4 0" />
-                  </svg>
-                </div>
-                <CardTitle className="text-lg">Reciprocity</CardTitle>
-              </CardHeader>
-              <CardContent className="pt-0 flex-1">
-                <p className="text-muted-foreground text-sm leading-relaxed">
-                  Helping others is rewarded with credits that can be used to receive help in return. 
-                  This creates a sustainable cycle of giving and receiving.
-                </p>
-              </CardContent>
-            </Card>
-            <Card className="flex flex-col items-center text-center h-full bg-card/50 border-border/50 hover:border-primary/30 transition-colors">
-              <CardHeader className="pb-4 flex flex-col items-center">
-                <div className="flex h-14 w-14 items-center justify-center rounded-xl bg-primary/10 mb-4">
-                  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-7 w-7 text-primary">
-                    <path d="M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10z" />
-                    <path d="m15 9-6 6" />
-                    <path d="m9 9 6 6" />
-                  </svg>
-                </div>
-                <CardTitle className="text-lg">No Money Involved</CardTitle>
-              </CardHeader>
-              <CardContent className="pt-0 flex-1">
-                <p className="text-muted-foreground text-sm leading-relaxed">
-                  Time Banking operates completely outside the monetary system. 
-                  No cash changes hands, making skills accessible to everyone.
-                </p>
-              </CardContent>
-            </Card>
-            <Card className="flex flex-col items-center text-center h-full bg-card/50 border-border/50 hover:border-primary/30 transition-colors">
-              <CardHeader className="pb-4 flex flex-col items-center">
-                <div className="flex h-14 w-14 items-center justify-center rounded-xl bg-primary/10 mb-4">
-                  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-7 w-7 text-primary">
-                    <path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z" />
-                    <circle cx="12" cy="12" r="3" />
-                  </svg>
-                </div>
-                <CardTitle className="text-lg">Transparency</CardTitle>
-              </CardHeader>
-              <CardContent className="pt-0 flex-1">
-                <p className="text-muted-foreground text-sm leading-relaxed">
-                  All exchanges are tracked and visible. The platform provides a clear record of 
-                  credits earned and spent, ensuring fairness and accountability.
-                </p>
-              </CardContent>
-            </Card>
-            <Card className="flex flex-col items-center text-center h-full bg-card/50 border-border/50 hover:border-primary/30 transition-colors">
-              <CardHeader className="pb-4 flex flex-col items-center">
-                <div className="flex h-14 w-14 items-center justify-center rounded-xl bg-primary/10 mb-4">
-                  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-7 w-7 text-primary">
-                    <path d="M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10z" />
-                    <path d="m9 12 2 2 4-4" />
-                  </svg>
-                </div>
-                <CardTitle className="text-lg">Community Building</CardTitle>
-              </CardHeader>
-              <CardContent className="pt-0 flex-1">
-                <p className="text-muted-foreground text-sm leading-relaxed">
-                  Time Banking strengthens communities by creating networks of mutual support. 
-                  It connects people who might not otherwise meet and builds social capital.
-                </p>
-              </CardContent>
-            </Card>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 relative z-10 py-10 max-w-7xl mx-auto">
+            {features.map((feature, index) => (
+              <Feature key={feature.title} {...feature} index={index} />
+            ))}
           </div>
         </div>
       </section>
@@ -475,3 +420,44 @@ export default function HowItWorksPage() {
     </div>
   );
 }
+
+const Feature = ({
+  title,
+  description,
+  icon,
+  index,
+}: {
+  title: string;
+  description: string;
+  icon: React.ReactNode;
+  index: number;
+}) => {
+  return (
+    <div
+      className={cn(
+        "flex flex-col lg:border-r  py-10 relative group/feature dark:border-neutral-800",
+        (index === 0 || index === 4) && "lg:border-l dark:border-neutral-800",
+        index < 4 && "lg:border-b dark:border-neutral-800"
+      )}
+    >
+      {index < 4 && (
+        <div className="opacity-0 group-hover/feature:opacity-100 transition duration-200 absolute inset-0 h-full w-full bg-gradient-to-t from-neutral-100 dark:from-neutral-800 to-transparent pointer-events-none" />
+      )}
+      {index >= 4 && (
+        <div className="opacity-0 group-hover/feature:opacity-100 transition duration-200 absolute inset-0 h-full w-full bg-gradient-to-b from-neutral-100 dark:from-neutral-800 to-transparent pointer-events-none" />
+      )}
+      <div className="mb-4 relative z-10 px-10 text-neutral-600 dark:text-neutral-400">
+        {icon}
+      </div>
+      <div className="text-lg font-bold mb-2 relative z-10 px-10">
+        <div className="absolute left-0 inset-y-0 h-6 group-hover/feature:h-8 w-1 rounded-tr-full rounded-br-full bg-neutral-300 dark:bg-neutral-700 group-hover/feature:bg-blue-500 transition-all duration-200 origin-center" />
+        <span className="group-hover/feature:translate-x-2 transition duration-200 inline-block text-neutral-800 dark:text-neutral-100">
+          {title}
+        </span>
+      </div>
+      <p className="text-sm text-neutral-600 dark:text-neutral-300 max-w-xs relative z-10 px-10">
+        {description}
+      </p>
+    </div>
+  );
+};
