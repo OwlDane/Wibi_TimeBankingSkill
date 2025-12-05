@@ -34,11 +34,14 @@ function ProfileContent() {
   const [isDeleting, setIsDeleting] = useState<number | null>(null);
 
   useEffect(() => {
+    if (!user?.id) return;
+    
     fetchUserSkills().catch(console.error);
     fetchLearningSkills().catch(console.error);
     fetchUserBadges().catch(console.error);
-    fetchUserReviews(100, 0).catch(console.error);
-  }, [fetchUserSkills, fetchLearningSkills, fetchUserBadges, fetchUserReviews]);
+    // Fetch reviews for current user with user ID
+    fetchUserReviews(user.id, 100, 0).catch(console.error);
+  }, [user?.id, fetchUserSkills, fetchLearningSkills, fetchUserBadges, fetchUserReviews]);
 
   if (!user) return null;
 
