@@ -356,3 +356,19 @@ export interface UserBadge {
     is_pinned: boolean;
     is_completed: boolean;
 }
+
+// Notification Types
+export type NotificationType = 'session' | 'credit' | 'achievement' | 'review' | 'social';
+
+export interface Notification {
+    id: number;
+    user_id: number;
+    type: NotificationType;
+    title: string;
+    message: string;
+    data: Record<string, any>;
+    is_read: boolean;
+    read_at: string | null;
+    created_at: string;
+    updated_at: string;
+}
