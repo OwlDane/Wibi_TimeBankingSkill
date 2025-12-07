@@ -36,7 +36,9 @@ func InitializeUserHandler(db *gorm.DB) *handler.UserHandler {
 func InitializeTransactionHandler(db *gorm.DB) *handler.TransactionHandler {
 	transactionRepo := repository.NewTransactionRepository(db)
 	userRepo := repository.NewUserRepository(db)
-	transactionService := service.NewTransactionService(transactionRepo, userRepo)
+	notificationRepo := repository.NewNotificationRepository(db)
+	notificationService := service.NewNotificationService(notificationRepo, userRepo)
+	transactionService := service.NewTransactionService(transactionRepo, userRepo, notificationService)
 	return handler.NewTransactionHandler(transactionService)
 }
 

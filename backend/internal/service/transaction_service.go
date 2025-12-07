@@ -10,18 +10,21 @@ import (
 
 // TransactionService handles transaction business logic
 type TransactionService struct {
-	transactionRepo *repository.TransactionRepository
-	userRepo        *repository.UserRepository
+	transactionRepo     *repository.TransactionRepository
+	userRepo            *repository.UserRepository
+	notificationService *NotificationService
 }
 
 // NewTransactionService creates a new transaction service
 func NewTransactionService(
 	transactionRepo *repository.TransactionRepository,
 	userRepo *repository.UserRepository,
+	notificationService *NotificationService,
 ) *TransactionService {
 	return &TransactionService{
-		transactionRepo: transactionRepo,
-		userRepo:        userRepo,
+		transactionRepo:     transactionRepo,
+		userRepo:            userRepo,
+		notificationService: notificationService,
 	}
 }
 
@@ -224,6 +227,20 @@ func (s *TransactionService) TransferCredits(
 		return fmt.Errorf("failed to credit teacher: %w", err)
 	}
 
+	// Send credit earned notification to teacher
+	notificationData := map[string]interface{}{
+		"amount":      amount,
+		"sessionID":   sessionID,
+		"description": fmt.Sprintf("Earned from teaching session %d", sessionID),
+	}
+	_, _ = s.notificationService.CreateNotification(
+		teacherID,
+		models.NotificationTypeCredit,
+		"Credit Earned! 💰",
+		fmt.Sprintf("You earned %.1f credits from a teaching session", amount),
+		notificationData,
+	)
+
 	return nil
 }
 
@@ -250,6 +267,19 @@ func (s *TransactionService) AwardBonusCredits(
 	if err != nil {
 		return nil, err
 	}
+
+	// Send bonus credit notification
+	notificationData := map[string]interface{}{
+		"amount":      amount,
+		"description": description,
+	}
+	_, _ = s.notificationService.CreateNotification(
+		userID,
+		models.NotificationTypeCredit,
+		"Bonus Credits Awarded! 🎉",
+		fmt.Sprintf("You received %.1f bonus credits: %s", amount, description),
+		notificationData,
+	)
 
 	return transaction, nil
 }
