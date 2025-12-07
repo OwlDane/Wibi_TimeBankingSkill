@@ -10,10 +10,11 @@ import (
 )
 
 type SessionService struct {
-	sessionRepo     *repository.SessionRepository
-	userRepo        *repository.UserRepository
-	skillRepo       *repository.SkillRepository
-	transactionRepo *repository.TransactionRepository
+	sessionRepo        *repository.SessionRepository
+	userRepo           *repository.UserRepository
+	skillRepo          *repository.SkillRepository
+	transactionRepo    *repository.TransactionRepository
+	notificationService *NotificationService
 }
 
 func NewSessionService(
@@ -21,12 +22,14 @@ func NewSessionService(
 	userRepo *repository.UserRepository,
 	skillRepo *repository.SkillRepository,
 	transactionRepo *repository.TransactionRepository,
+	notificationService *NotificationService,
 ) *SessionService {
 	return &SessionService{
-		sessionRepo:     sessionRepo,
-		userRepo:        userRepo,
-		skillRepo:       skillRepo,
-		transactionRepo: transactionRepo,
+		sessionRepo:         sessionRepo,
+		userRepo:            userRepo,
+		skillRepo:           skillRepo,
+		transactionRepo:     transactionRepo,
+		notificationService: notificationService,
 	}
 }
 
@@ -104,6 +107,22 @@ func (s *SessionService) BookSession(studentID uint, req *dto.CreateSessionReque
 	if err != nil {
 		return nil, err
 	}
+
+	// Send notification to teacher about new session request
+	studentUser, _ := s.userRepo.FindByID(studentID)
+	skill, _ := s.skillRepo.GetByID(userSkill.SkillID)
+	notificationData := map[string]interface{}{
+		"sessionID":   session.ID,
+		"studentName": studentUser.FullName,
+		"skillName":   skill.Name,
+	}
+	_, _ = s.notificationService.CreateNotification(
+		userSkill.UserID,
+		models.NotificationTypeSession,
+		"New Session Request",
+		studentUser.FullName+" wants to learn "+skill.Name,
+		notificationData,
+	)
 
 	return dto.MapSessionToResponse(session), nil
 }
@@ -215,6 +234,22 @@ func (s *SessionService) ApproveSession(teacherID, sessionID uint, req *dto.Appr
 	if err := s.sessionRepo.Update(session); err != nil {
 		return nil, errors.New("failed to approve session")
 	}
+
+	// Send notification to student about session approval
+	teacher, _ := s.userRepo.FindByID(teacherID)
+	skill, _ := s.skillRepo.GetByID(session.UserSkill.SkillID)
+	notificationData := map[string]interface{}{
+		"sessionID":   session.ID,
+		"teacherName": teacher.FullName,
+		"skillName":   skill.Name,
+	}
+	_, _ = s.notificationService.CreateNotification(
+		session.StudentID,
+		models.NotificationTypeSession,
+		"Session Approved",
+		teacher.FullName+" approved your "+skill.Name+" session",
+		notificationData,
+	)
 
 	return dto.MapSessionToResponse(session), nil
 }

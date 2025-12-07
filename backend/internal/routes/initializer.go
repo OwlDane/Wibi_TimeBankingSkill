@@ -46,7 +46,9 @@ func InitializeSessionHandler(db *gorm.DB) *handler.SessionHandler {
 	userRepo := repository.NewUserRepository(db)
 	skillRepo := repository.NewSkillRepository(db)
 	transactionRepo := repository.NewTransactionRepository(db)
-	sessionService := service.NewSessionService(sessionRepo, userRepo, skillRepo, transactionRepo)
+	notificationRepo := repository.NewNotificationRepository(db)
+	notificationService := service.NewNotificationService(notificationRepo, userRepo)
+	sessionService := service.NewSessionService(sessionRepo, userRepo, skillRepo, transactionRepo, notificationService)
 	return handler.NewSessionHandler(sessionService)
 }
 
