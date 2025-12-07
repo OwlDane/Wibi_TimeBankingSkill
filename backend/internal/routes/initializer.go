@@ -83,3 +83,28 @@ func InitializeNotificationHandler(db *gorm.DB) *handler.NotificationHandler {
 	notificationService := service.NewNotificationService(notificationRepo, userRepo)
 	return handler.NewNotificationHandler(notificationService)
 }
+
+// InitializeForumHandler initializes forum handler with dependencies
+func InitializeForumHandler(db *gorm.DB) *handler.ForumHandler {
+	forumRepo := repository.NewForumRepository(db)
+	userRepo := repository.NewUserRepository(db)
+	forumService := service.NewForumService(forumRepo, userRepo)
+	return handler.NewForumHandler(forumService)
+}
+
+// InitializeStoryHandler initializes story handler with dependencies
+func InitializeStoryHandler(db *gorm.DB) *handler.StoryHandler {
+	storyRepo := repository.NewStoryRepository(db)
+	userRepo := repository.NewUserRepository(db)
+	storyService := service.NewStoryService(storyRepo, userRepo)
+	return handler.NewStoryHandler(storyService)
+}
+
+// InitializeEndorsementHandler initializes endorsement handler with dependencies
+func InitializeEndorsementHandler(db *gorm.DB) *handler.EndorsementHandler {
+	endorsementRepo := repository.NewEndorsementRepository(db)
+	userRepo := repository.NewUserRepository(db)
+	skillRepo := repository.NewSkillRepository(db)
+	endorsementService := service.NewEndorsementService(endorsementRepo, userRepo, skillRepo)
+	return handler.NewEndorsementHandler(endorsementService)
+}

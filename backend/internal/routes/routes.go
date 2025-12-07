@@ -17,6 +17,9 @@ func SetupRoutes(router *gin.Engine, db *gorm.DB) {
 	reviewHandler := InitializeReviewHandler(db)
 	badgeHandler := InitializeBadgeHandler(db)
 	notificationHandler := InitializeNotificationHandler(db)
+	forumHandler := InitializeForumHandler(db)
+	storyHandler := InitializeStoryHandler(db)
+	endorsementHandler := InitializeEndorsementHandler(db)
 
 	// API v1 group
 	v1 := router.Group("/api/v1")
@@ -153,6 +156,46 @@ func SetupRoutes(router *gin.Engine, db *gorm.DB) {
 				notifications.PUT("/:id/read", notificationHandler.MarkAsRead)                // PUT /api/v1/notifications/1/read
 				notifications.PUT("/read-all", notificationHandler.MarkAllAsRead)             // PUT /api/v1/notifications/read-all
 				notifications.DELETE("/:id", notificationHandler.DeleteNotification)          // DELETE /api/v1/notifications/1
+			}
+
+			// Forum routes
+			forum := protected.Group("/forum")
+			{
+				forum.GET("/categories", forumHandler.GetCategories)                          // GET /api/v1/forum/categories
+				forum.POST("/threads", forumHandler.CreateThread)                             // POST /api/v1/forum/threads
+				forum.GET("/threads/:id", forumHandler.GetThread)                             // GET /api/v1/forum/threads/:id
+				forum.GET("/categories/:id/threads", forumHandler.GetThreadsByCategory)       // GET /api/v1/forum/categories/:id/threads
+				forum.PUT("/threads/:id", forumHandler.UpdateThread)                          // PUT /api/v1/forum/threads/:id
+				forum.POST("/replies", forumHandler.CreateReply)                              // POST /api/v1/forum/replies
+				forum.GET("/threads/:id/replies", forumHandler.GetReplies)                    // GET /api/v1/forum/threads/:id/replies
+				forum.DELETE("/replies/:id", forumHandler.DeleteReply)                        // DELETE /api/v1/forum/replies/:id
+			}
+
+			// Stories routes
+			stories := protected.Group("/stories")
+			{
+				stories.POST("", storyHandler.CreateStory)                                    // POST /api/v1/stories
+				stories.GET("/:id", storyHandler.GetStory)                                    // GET /api/v1/stories/:id
+				stories.GET("/published", storyHandler.GetPublishedStories)                   // GET /api/v1/stories/published
+				stories.GET("/user/:user_id", storyHandler.GetUserStories)                    // GET /api/v1/stories/user/:user_id
+				stories.PUT("/:id", storyHandler.UpdateStory)                                 // PUT /api/v1/stories/:id
+				stories.DELETE("/:id", storyHandler.DeleteStory)                              // DELETE /api/v1/stories/:id
+				stories.POST("/comments", storyHandler.CreateComment)                         // POST /api/v1/stories/comments
+				stories.GET("/:story_id/comments", storyHandler.GetComments)                  // GET /api/v1/stories/:story_id/comments
+				stories.DELETE("/comments/:id", storyHandler.DeleteComment)                   // DELETE /api/v1/stories/comments/:id
+				stories.POST("/:id/like", storyHandler.LikeStory)                             // POST /api/v1/stories/:id/like
+				stories.POST("/:id/unlike", storyHandler.UnlikeStory)                         // POST /api/v1/stories/:id/unlike
+			}
+
+			// Endorsements routes
+			endorsements := protected.Group("/endorsements")
+			{
+				endorsements.POST("", endorsementHandler.CreateEndorsement)                   // POST /api/v1/endorsements
+				endorsements.GET("/user/:user_id", endorsementHandler.GetEndorsementsForUser) // GET /api/v1/endorsements/user/:user_id
+				endorsements.GET("/user/:user_id/skill/:skill_id", endorsementHandler.GetEndorsementsForSkill) // GET /api/v1/endorsements/user/:user_id/skill/:skill_id
+				endorsements.GET("/count/:user_id/:skill_id", endorsementHandler.GetEndorsementCount)         // GET /api/v1/endorsements/count/:user_id/:skill_id
+				endorsements.DELETE("/:id", endorsementHandler.DeleteEndorsement)             // DELETE /api/v1/endorsements/:id
+				endorsements.GET("/top-skills", endorsementHandler.GetTopEndorsedSkills)      // GET /api/v1/endorsements/top-skills
 			}
 		}
 	}
