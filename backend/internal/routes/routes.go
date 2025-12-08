@@ -1,9 +1,16 @@
 package routes
 
 import (
+	"fmt"
+	"log"
+	"net/http"
+
 	"github.com/gin-gonic/gin"
+	"github.com/gorilla/websocket"
 	"github.com/timebankingskill/backend/internal/config"
 	"github.com/timebankingskill/backend/internal/middleware"
+	"github.com/timebankingskill/backend/internal/models"
+	whiteboardws "github.com/timebankingskill/backend/internal/websocket"
 	"gorm.io/gorm"
 )
 
@@ -24,6 +31,48 @@ func SetupRoutes(router *gin.Engine, db *gorm.DB, cfg *config.Config) {
 	videoSessionHandler := InitializeVideoSessionHandler(db, cfg)
 	sharedFileHandler := InitializeSharedFileHandler(db)
 	whiteboardHandler := InitializeWhiteboardHandler(db)
+
+	// WebSocket endpoints (before auth middleware)
+	router.GET("/api/v1/ws/whiteboard/:sessionId", func(c *gin.Context) {
+		// Get user from context (set by auth middleware)
+		userID, exists := c.Get("user_id")
+		if !exists {
+			c.JSON(401, gin.H{"error": "Unauthorized"})
+			return
+		}
+
+		userName, _ := c.Get("user_name")
+		sessionIDStr := c.Param("sessionId")
+
+		// Parse session ID
+		var sessionID uint
+		if _, err := fmt.Sscanf(sessionIDStr, "%d", &sessionID); err != nil {
+			c.JSON(400, gin.H{"error": "Invalid session ID"})
+			return
+		}
+
+		// Upgrade connection
+		upgrader := websocket.Upgrader{
+			CheckOrigin: func(r *http.Request) bool {
+				return true // Allow all origins for now
+			},
+		}
+
+		conn, err := upgrader.Upgrade(c.Writer, c.Request, nil)
+		if err != nil {
+			log.Printf("WebSocket upgrade error: %v", err)
+			return
+		}
+
+		// Create mock user object
+		user := &models.User{
+			ID:       userID.(uint),
+			FullName: userName.(string),
+		}
+
+		// Handle whiteboard connection
+		whiteboardws.HandleWhiteboardConnection(conn, sessionID, user)
+	})
 
 	// API v1 group
 	v1 := router.Group("/api/v1")
