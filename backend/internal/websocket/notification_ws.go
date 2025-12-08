@@ -71,7 +71,7 @@ func (ws *NotificationWebSocket) HandleConnection(c *gin.Context) {
 	defer conn.Close()
 
 	// Create channel for this client
-	notificationChan := make(chan interface{}, 10)
+	notificationChan := make(chan *models.Notification, 10)
 	defer close(notificationChan)
 
 	// Register client with notification service
@@ -83,7 +83,7 @@ func (ws *NotificationWebSocket) HandleConnection(c *gin.Context) {
 	// Listen for notifications and send to client
 	for notification := range notificationChan {
 		// Convert notification to response DTO
-		notifResponse := dto.MapNotificationToResponse(notification.(*models.Notification))
+		notifResponse := dto.MapNotificationToResponse(notification)
 
 		// Send to client
 		if err := conn.WriteJSON(notifResponse); err != nil {
