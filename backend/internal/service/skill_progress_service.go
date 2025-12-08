@@ -77,7 +77,7 @@ func (s *SkillProgressService) UpdateProgress(userID, skillID uint, req *dto.Upd
 	progress, err := s.progressRepo.GetByUserAndSkill(userID, skillID)
 	if err != nil {
 		// Create new progress if doesn't exist
-		skill, err := s.skillRepo.GetByID(skillID)
+		_, err := s.skillRepo.GetByID(skillID)
 		if err != nil {
 			return nil, errors.New("skill not found")
 		}
@@ -206,14 +206,23 @@ func (s *SkillProgressService) checkAndAwardMilestones(progress *models.SkillPro
 			s.progressRepo.UpdateMilestone(&m)
 
 			// Send notification
-			notification := &models.Notification{
-				UserID:  progress.UserID,
-				Type:    "achievement",
-				Title:   "Milestone Achieved!",
-				Message: "You've achieved the '" + m.Title + "' milestone in " + progress.Skill.Name,
-				Data:    map[string]interface{}{"milestone_id": m.ID, "skill_id": progress.SkillID},
+			skillName := ""
+			if progress.Skill != nil {
+				skillName = progress.Skill.Name
 			}
-			s.notificationService.CreateNotification(notification)
+			
+			data := map[string]interface{}{
+				"milestone_id": m.ID,
+				"skill_id":     progress.SkillID,
+			}
+			
+			s.notificationService.CreateNotification(
+				progress.UserID,
+				"achievement",
+				"Milestone Achieved!",
+				"You've achieved the '"+m.Title+"' milestone in "+skillName,
+				data,
+			)
 		}
 	}
 }
