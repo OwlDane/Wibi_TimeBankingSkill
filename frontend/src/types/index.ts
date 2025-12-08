@@ -495,3 +495,39 @@ export interface StartVideoSessionRequest {
 export interface EndVideoSessionRequest {
     duration: number;
 }
+
+// File Sharing Types
+export interface SharedFile {
+    id: number;
+    session_id: number;
+    uploader_id: number;
+    uploader?: UserProfile;
+    file_name: string;
+    file_size: number;
+    file_type: string;
+    file_url: string;
+    description: string;
+    is_public: boolean;
+    metadata?: Record<string, any>;
+    created_at: number;
+    updated_at: number;
+}
+
+export interface UploadFileRequest {
+    session_id: number;
+    description?: string;
+    is_public?: boolean;
+}
+
+export interface GetSessionFilesResponse {
+    session_id: number;
+    files: SharedFile[];
+    count: number;
+}
+
+export interface FileStats {
+    session_id: number;
+    file_count: number;
+    total_size: number;
+    total_size_mb: number;
+}
