@@ -24,21 +24,21 @@ func NewSharedFileHandler(service *service.SharedFileService) *SharedFileHandler
 func (h *SharedFileHandler) UploadFile(c *gin.Context) {
 	userID, exists := c.Get("user_id")
 	if !exists {
-		utils.SendError(c, http.StatusUnauthorized, "Unauthorized")
+		utils.SendError(c, http.StatusUnauthorized, "Unauthorized", nil)
 		return
 	}
 
 	sessionID := c.Param("id")
 	sessionIDUint, err := strconv.ParseUint(sessionID, 10, 32)
 	if err != nil {
-		utils.SendError(c, http.StatusBadRequest, "Invalid session ID")
+		utils.SendError(c, http.StatusBadRequest, "Invalid session ID", err)
 		return
 	}
 
 	// Get file from request
 	file, err := c.FormFile("file")
 	if err != nil {
-		utils.SendError(c, http.StatusBadRequest, "File is required")
+		utils.SendError(c, http.StatusBadRequest, "File is required", err)
 		return
 	}
 
@@ -54,7 +54,7 @@ func (h *SharedFileHandler) UploadFile(c *gin.Context) {
 		isPublic,
 	)
 	if err != nil {
-		utils.SendError(c, http.StatusBadRequest, err.Error())
+		utils.SendError(c, http.StatusBadRequest, "Failed to upload file", err)
 		return
 	}
 
@@ -67,13 +67,13 @@ func (h *SharedFileHandler) GetSessionFiles(c *gin.Context) {
 	sessionID := c.Param("id")
 	sessionIDUint, err := strconv.ParseUint(sessionID, 10, 32)
 	if err != nil {
-		utils.SendError(c, http.StatusBadRequest, "Invalid session ID")
+		utils.SendError(c, http.StatusBadRequest, "Invalid session ID", err)
 		return
 	}
 
 	response, err := h.service.GetSessionFiles(uint(sessionIDUint))
 	if err != nil {
-		utils.SendError(c, http.StatusInternalServerError, err.Error())
+		utils.SendError(c, http.StatusInternalServerError, "Failed to retrieve files", err)
 		return
 	}
 
@@ -86,13 +86,13 @@ func (h *SharedFileHandler) GetFile(c *gin.Context) {
 	fileID := c.Param("id")
 	fileIDUint, err := strconv.ParseUint(fileID, 10, 32)
 	if err != nil {
-		utils.SendError(c, http.StatusBadRequest, "Invalid file ID")
+		utils.SendError(c, http.StatusBadRequest, "Invalid file ID", err)
 		return
 	}
 
 	response, err := h.service.GetFile(uint(fileIDUint))
 	if err != nil {
-		utils.SendError(c, http.StatusNotFound, err.Error())
+		utils.SendError(c, http.StatusNotFound, "File not found", err)
 		return
 	}
 
@@ -104,19 +104,19 @@ func (h *SharedFileHandler) GetFile(c *gin.Context) {
 func (h *SharedFileHandler) DeleteFile(c *gin.Context) {
 	userID, exists := c.Get("user_id")
 	if !exists {
-		utils.SendError(c, http.StatusUnauthorized, "Unauthorized")
+		utils.SendError(c, http.StatusUnauthorized, "Unauthorized", nil)
 		return
 	}
 
 	fileID := c.Param("id")
 	fileIDUint, err := strconv.ParseUint(fileID, 10, 32)
 	if err != nil {
-		utils.SendError(c, http.StatusBadRequest, "Invalid file ID")
+		utils.SendError(c, http.StatusBadRequest, "Invalid file ID", err)
 		return
 	}
 
 	if err := h.service.DeleteFile(userID.(uint), uint(fileIDUint)); err != nil {
-		utils.SendError(c, http.StatusBadRequest, err.Error())
+		utils.SendError(c, http.StatusBadRequest, "Failed to delete file", err)
 		return
 	}
 
@@ -129,13 +129,13 @@ func (h *SharedFileHandler) GetSessionFileStats(c *gin.Context) {
 	sessionID := c.Param("id")
 	sessionIDUint, err := strconv.ParseUint(sessionID, 10, 32)
 	if err != nil {
-		utils.SendError(c, http.StatusBadRequest, "Invalid session ID")
+		utils.SendError(c, http.StatusBadRequest, "Invalid session ID", err)
 		return
 	}
 
 	stats, err := h.service.GetSessionFileStats(uint(sessionIDUint))
 	if err != nil {
-		utils.SendError(c, http.StatusInternalServerError, err.Error())
+		utils.SendError(c, http.StatusInternalServerError, "Failed to retrieve statistics", err)
 		return
 	}
 

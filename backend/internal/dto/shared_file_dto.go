@@ -14,7 +14,7 @@ type SharedFileResponse struct {
 	ID          uint                `json:"id"`
 	SessionID   uint                `json:"session_id"`
 	UploaderID  uint                `json:"uploader_id"`
-	Uploader    *UserResponse       `json:"uploader,omitempty"`
+	Uploader    *UserPublicProfile  `json:"uploader,omitempty"`
 	FileName    string              `json:"file_name"`
 	FileSize    int64               `json:"file_size"`
 	FileType    string              `json:"file_type"`

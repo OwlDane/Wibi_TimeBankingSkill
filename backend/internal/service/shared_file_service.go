@@ -4,7 +4,6 @@ import (
 	"errors"
 	"mime/multipart"
 	"path/filepath"
-	"time"
 
 	"github.com/timebankingskill/backend/internal/dto"
 	"github.com/timebankingskill/backend/internal/models"
@@ -200,12 +199,13 @@ func (s *SharedFileService) mapToSharedFileResponse(file *models.SharedFile) *dt
 	}
 
 	if file.Uploader != nil {
-		response.Uploader = &UserResponse{
+		response.Uploader = &dto.UserPublicProfile{
 			ID:       file.Uploader.ID,
-			Email:    file.Uploader.Email,
 			FullName: file.Uploader.FullName,
 			Username: file.Uploader.Username,
 			Avatar:   file.Uploader.Avatar,
+			School:   file.Uploader.School,
+			Grade:    file.Uploader.Grade,
 		}
 	}
 
