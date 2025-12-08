@@ -1,7 +1,7 @@
 package models
 
 import (
-  "gorm.io/gorm"
+	"gorm.io/gorm"
 )
 
 // AutoMigrate runs all model migrations
@@ -23,5 +23,6 @@ func AutoMigrate(db *gorm.DB) error {
 		&SuccessStory{},
 		&StoryComment{},
 		&Endorsement{},
+		&VideoSession{},
 	)
 }

@@ -20,6 +20,7 @@ func SetupRoutes(router *gin.Engine, db *gorm.DB) {
 	forumHandler := InitializeForumHandler(db)
 	storyHandler := InitializeStoryHandler(db)
 	endorsementHandler := InitializeEndorsementHandler(db)
+	videoSessionHandler := InitializeVideoSessionHandler(db)
 
 	// API v1 group
 	v1 := router.Group("/api/v1")
@@ -103,6 +104,10 @@ func SetupRoutes(router *gin.Engine, db *gorm.DB) {
 				// Transaction Management
 				user.GET("/transactions", transactionHandler.GetUserTransactions)    // GET /api/v1/user/transactions
 				user.GET("/transactions/:id", transactionHandler.GetTransactionByID) // GET /api/v1/user/transactions/1
+
+				// Video Session Management
+				user.GET("/video-history", videoSessionHandler.GetVideoHistory)      // GET /api/v1/user/video-history
+				user.GET("/video-stats", videoSessionHandler.GetVideoStats)          // GET /api/v1/user/video-stats
 			}
 
 			// Admin Skills Management (future: add admin middleware)
@@ -126,6 +131,11 @@ func SetupRoutes(router *gin.Engine, db *gorm.DB) {
 				sessions.POST("/:id/start", sessionHandler.StartSession)         // POST /api/v1/sessions/:id/start
 				sessions.POST("/:id/complete", sessionHandler.ConfirmCompletion) // POST /api/v1/sessions/:id/complete
 				sessions.POST("/:id/cancel", sessionHandler.CancelSession)       // POST /api/v1/sessions/:id/cancel
+
+				// Video session routes
+				sessions.POST("/:id/video/start", videoSessionHandler.StartVideoSession)     // POST /api/v1/sessions/:id/video/start
+				sessions.GET("/:id/video/status", videoSessionHandler.GetVideoSessionStatus) // GET /api/v1/sessions/:id/video/status
+				sessions.POST("/:id/video/end", videoSessionHandler.EndVideoSession)         // POST /api/v1/sessions/:id/video/end
 			}
 
 			// Reviews routes

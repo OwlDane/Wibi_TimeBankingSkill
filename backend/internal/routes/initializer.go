@@ -114,3 +114,14 @@ func InitializeEndorsementHandler(db *gorm.DB) *handler.EndorsementHandler {
 	endorsementService := service.NewEndorsementServiceWithNotification(endorsementRepo, userRepo, skillRepo, notificationService)
 	return handler.NewEndorsementHandler(endorsementService)
 }
+
+// InitializeVideoSessionHandler initializes video session handler with dependencies
+func InitializeVideoSessionHandler(db *gorm.DB) *handler.VideoSessionHandler {
+	videoSessionRepo := repository.NewVideoSessionRepository(db)
+	sessionRepo := repository.NewSessionRepository(db)
+	userRepo := repository.NewUserRepository(db)
+	notificationRepo := repository.NewNotificationRepository(db)
+	notificationService := service.NewNotificationService(notificationRepo, userRepo)
+	videoSessionService := service.NewVideoSessionServiceWithNotification(videoSessionRepo, sessionRepo, userRepo, notificationService)
+	return handler.NewVideoSessionHandler(videoSessionService)
+}
