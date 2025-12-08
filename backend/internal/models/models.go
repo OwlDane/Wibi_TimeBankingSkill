@@ -26,5 +26,7 @@ func AutoMigrate(db *gorm.DB) error {
 		&VideoSession{},
 		&SharedFile{},
 		&Whiteboard{},
+		&SkillProgress{},
+		&Milestone{},
 	)
 }
