@@ -18,6 +18,7 @@ export function useNotificationWebSocket() {
     const wsRef = useRef<WebSocket | null>(null);
     const reconnectTimeoutRef = useRef<NodeJS.Timeout | null>(null);
     const reconnectAttemptsRef = useRef(0);
+    const isIntentionalDisconnectRef = useRef(false); // Track intentional disconnects
     const maxReconnectAttempts = 5;
     const baseReconnectDelay = 1000; // 1 second
 
@@ -43,6 +44,9 @@ export function useNotificationWebSocket() {
         if (!user || wsRef.current) {
             return;
         }
+
+        // Reset intentional disconnect flag
+        isIntentionalDisconnectRef.current = false;
 
         // Get token from localStorage
         const token = localStorage.getItem('token');
@@ -81,18 +85,24 @@ export function useNotificationWebSocket() {
                 }
             };
 
-            wsRef.current.onerror = (error) => {
-                console.error('❌ WebSocket error:', error);
+            wsRef.current.onerror = () => {
+                // Only log error if not intentional disconnect (e.g., page navigation)
+                if (!isIntentionalDisconnectRef.current) {
+                    console.warn('⚠️ WebSocket connection issue');
+                }
                 setConnected(false);
             };
 
             wsRef.current.onclose = () => {
-                console.log('⚠️  WebSocket disconnected');
+                // Only log if not intentional disconnect
+                if (!isIntentionalDisconnectRef.current) {
+                    console.log('⚠️ WebSocket disconnected');
+                }
                 setConnected(false);
                 wsRef.current = null;
 
-                // Attempt to reconnect with exponential backoff
-                if (reconnectAttemptsRef.current < maxReconnectAttempts) {
+                // Only attempt to reconnect if not intentional disconnect
+                if (!isIntentionalDisconnectRef.current && reconnectAttemptsRef.current < maxReconnectAttempts) {
                     const delay = getReconnectDelay();
                     console.log(
                         `🔄 Reconnecting in ${delay}ms (attempt ${reconnectAttemptsRef.current + 1}/${maxReconnectAttempts})`
@@ -102,7 +112,7 @@ export function useNotificationWebSocket() {
                         reconnectAttemptsRef.current += 1;
                         connect();
                     }, delay);
-                } else {
+                } else if (!isIntentionalDisconnectRef.current && reconnectAttemptsRef.current >= maxReconnectAttempts) {
                     console.error('❌ Max reconnection attempts reached');
                 }
             };
@@ -116,6 +126,9 @@ export function useNotificationWebSocket() {
      * Disconnect from WebSocket server
      */
     const disconnect = () => {
+        // Mark as intentional disconnect to suppress error logs
+        isIntentionalDisconnectRef.current = true;
+
         if (reconnectTimeoutRef.current) {
             clearTimeout(reconnectTimeoutRef.current);
             reconnectTimeoutRef.current = null;
@@ -148,3 +161,4 @@ export function useNotificationWebSocket() {
         disconnect,
     };
 }
+
