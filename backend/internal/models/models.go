@@ -9,36 +9,35 @@ import (
 // Only migrates tables that don't exist to avoid ALTER TABLE issues
 func AutoMigrate(db *gorm.DB) error {
 	models := []struct {
-		name      string
-		tableName string
-		model     interface{}
+		name  string
+		model interface{}
 	}{
-		{"User", "users", &User{}},
-		{"Skill", "skills", &Skill{}},
-		{"UserSkill", "user_skills", &UserSkill{}},
-		{"LearningSkill", "learning_skills", &LearningSkill{}},
-		{"Session", "sessions", &Session{}},
-		{"Review", "reviews", &Review{}},
-		{"Badge", "badges", &Badge{}},
-		{"UserBadge", "user_badges", &UserBadge{}},
-		{"Transaction", "transactions", &Transaction{}},
-		{"Notification", "notifications", &Notification{}},
-		{"ForumCategory", "forum_categories", &ForumCategory{}},
-		{"ForumThread", "forum_threads", &ForumThread{}},
-		{"ForumReply", "forum_replies", &ForumReply{}},
-		{"SuccessStory", "success_stories", &SuccessStory{}},
-		{"StoryComment", "story_comments", &StoryComment{}},
-		{"Endorsement", "endorsements", &Endorsement{}},
-		{"VideoSession", "video_sessions", &VideoSession{}},
-		{"SharedFile", "shared_files", &SharedFile{}},
-		{"Whiteboard", "whiteboards", &Whiteboard{}},
-		{"SkillProgress", "skill_progresses", &SkillProgress{}},
-		{"Milestone", "milestones", &Milestone{}},
+		{"User", &User{}},
+		{"Skill", &Skill{}},
+		{"UserSkill", &UserSkill{}},
+		{"LearningSkill", &LearningSkill{}},
+		{"Session", &Session{}},
+		{"Review", &Review{}},
+		{"Badge", &Badge{}},
+		{"UserBadge", &UserBadge{}},
+		{"Transaction", &Transaction{}},
+		{"Notification", &Notification{}},
+		{"ForumCategory", &ForumCategory{}},
+		{"ForumThread", &ForumThread{}},
+		{"ForumReply", &ForumReply{}},
+		{"SuccessStory", &SuccessStory{}},
+		{"StoryComment", &StoryComment{}},
+		{"Endorsement", &Endorsement{}},
+		{"VideoSession", &VideoSession{}},
+		{"SharedFile", &SharedFile{}},
+		{"Whiteboard", &Whiteboard{}},
+		{"SkillProgress", &SkillProgress{}},
+		{"Milestone", &Milestone{}},
 	}
 
 	for _, m := range models {
-		// Check if table exists
-		if db.Migrator().HasTable(m.tableName) {
+		// Check if table exists using model's TableName
+		if db.Migrator().HasTable(m.model) {
 			fmt.Printf("  ✓ %s table exists, skipping\n", m.name)
 			continue
 		}

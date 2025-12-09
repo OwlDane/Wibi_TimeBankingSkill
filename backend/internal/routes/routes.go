@@ -76,6 +76,10 @@ func SetupRoutes(router *gin.Engine, db *gorm.DB, cfg *config.Config) {
 		whiteboardws.HandleWhiteboardConnection(conn, sessionID, user)
 	})
 
+	// Notification WebSocket endpoint
+	notificationWS := InitializeNotificationWebSocket(db)
+	router.GET("/api/v1/ws/notifications", notificationWS.HandleConnection)
+
 	// API v1 group
 	v1 := router.Group("/api/v1")
 	{

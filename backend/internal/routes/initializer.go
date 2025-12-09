@@ -5,6 +5,7 @@ import (
 	"github.com/timebankingskill/backend/internal/handler"
 	"github.com/timebankingskill/backend/internal/repository"
 	"github.com/timebankingskill/backend/internal/service"
+	"github.com/timebankingskill/backend/internal/websocket"
 	"gorm.io/gorm"
 )
 
@@ -169,3 +170,12 @@ func InitializeAnalyticsHandler(db *gorm.DB) *handler.AnalyticsHandler {
 	analyticsService := service.NewAnalyticsService(userRepo, sessionRepo, transactionRepo, reviewRepo, skillRepo, badgeRepo)
 	return handler.NewAnalyticsHandler(analyticsService)
 }
+
+// InitializeNotificationWebSocket initializes notification WebSocket handler with dependencies
+func InitializeNotificationWebSocket(db *gorm.DB) *websocket.NotificationWebSocket {
+	notificationRepo := repository.NewNotificationRepository(db)
+	userRepo := repository.NewUserRepository(db)
+	notificationService := service.NewNotificationService(notificationRepo, userRepo)
+	return websocket.NewNotificationWebSocket(notificationService)
+}
+
