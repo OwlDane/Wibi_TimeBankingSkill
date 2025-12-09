@@ -3,6 +3,7 @@ package config
 import (
 	"fmt"
 	"os"
+	"strings"
 	"time"
 
 	"github.com/joho/godotenv"
@@ -89,9 +90,7 @@ func Load() (*Config, error) {
 			Expiry: jwtExpiry,
 		},
 		CORS: CORSConfig{
-			AllowedOrigins: []string{
-				getEnv("ALLOWED_ORIGINS", ""),
-			},
+			AllowedOrigins: parseAllowedOrigins(getEnv("ALLOWED_ORIGINS", "http://localhost:3000")),
 		},
 		Supabase: SupabaseConfig{
 			URL: getEnv("SUPABASE_URL", ""),
@@ -122,6 +121,28 @@ func getEnv(key, defaultValue string) string {
 		return defaultValue
 	}
 	return value
+}
+
+// parseAllowedOrigins parses comma-separated origins from environment variable
+func parseAllowedOrigins(originsStr string) []string {
+	if originsStr == "" {
+		return []string{"http://localhost:3000"}
+	}
+
+	origins := strings.Split(originsStr, ",")
+	var parsed []string
+	for _, origin := range origins {
+		origin = strings.TrimSpace(origin)
+		if origin != "" {
+			parsed = append(parsed, origin)
+		}
+	}
+
+	if len(parsed) == 0 {
+		return []string{"http://localhost:3000"}
+	}
+
+	return parsed
 }
 
 // GetDSN returns database connection string
