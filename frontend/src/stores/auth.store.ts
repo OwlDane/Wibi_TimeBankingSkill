@@ -28,11 +28,14 @@ export const useAuthStore = create<AuthState>((set) => ({
     login: async (data: LoginRequest) => {
         set({ isLoading: true, error: null });
         try {
+            console.log('🔐 Logging in with email:', data.email);
             const response = await authService.login(data);
+            console.log('✅ Login response received:', response);
 
             // Save token and user
             authService.saveToken(response.token);
             authService.saveUser(response.user);
+            console.log('✅ Token and user saved to localStorage');
 
             set({
                 user: response.user,
@@ -41,7 +44,9 @@ export const useAuthStore = create<AuthState>((set) => ({
                 isLoading: false,
                 error: null,
             });
+            console.log('✅ Auth state updated');
         } catch (error: any) {
+            console.error('❌ Login error:', error);
             set({
                 isLoading: false,
                 error: error.message || 'Login failed',

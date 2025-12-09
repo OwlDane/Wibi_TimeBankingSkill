@@ -24,29 +24,52 @@ export const authService = {
 
   // Save token to localStorage
   saveToken: (token: string): void => {
-    localStorage.setItem('token', token);
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('token', token);
+      console.log('✅ Token saved:', token.substring(0, 20) + '...');
+    }
   },
 
   // Get token from localStorage
   getToken: (): string | null => {
-    return localStorage.getItem('token');
+    if (typeof window === 'undefined') {
+      return null;
+    }
+    const token = localStorage.getItem('token');
+    if (token) {
+      console.log('✅ Token retrieved:', token.substring(0, 20) + '...');
+    }
+    return token;
   },
 
   // Remove token from localStorage
   removeToken: (): void => {
-    localStorage.removeItem('token');
-    localStorage.removeItem('user');
+    if (typeof window !== 'undefined') {
+      localStorage.removeItem('token');
+      localStorage.removeItem('user');
+      console.log('✅ Token removed');
+    }
   },
 
   // Save user to localStorage
   saveUser: (user: UserProfile): void => {
-    localStorage.setItem('user', JSON.stringify(user));
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('user', JSON.stringify(user));
+      console.log('✅ User saved:', user.username);
+    }
   },
 
   // Get user from localStorage
   getUser: (): UserProfile | null => {
+    if (typeof window === 'undefined') {
+      return null;
+    }
     const user = localStorage.getItem('user');
-    return user ? JSON.parse(user) : null;
+    if (user) {
+      console.log('✅ User retrieved');
+      return JSON.parse(user);
+    }
+    return null;
   },
 
   // Check if user is authenticated
