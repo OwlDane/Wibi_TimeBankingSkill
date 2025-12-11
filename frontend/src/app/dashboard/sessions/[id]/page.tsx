@@ -10,6 +10,7 @@ import { ProtectedRoute } from '@/components/auth'
 import { VideoCallModal } from '@/components/video'
 import { useSessionStore } from '@/stores/session.store'
 import { useAuthStore } from '@/stores/auth.store'
+import { sessionService } from '@/lib/services/session.service'
 import { toast } from 'sonner'
 import { ArrowLeft, Calendar, Clock, User, MapPin, Link as LinkIcon, FileText, Loader2, Video } from 'lucide-react'
 import type { Session } from '@/types'
@@ -30,12 +31,15 @@ function SessionDetailContent() {
     useEffect(() => {
         // Fetch session details
         const fetchSession = async () => {
+            if (!sessionId) return
             try {
-                // This would need to be implemented in session service
-                // For now, we'll show a placeholder
-                setIsLoading(false)
+                setIsLoading(true)
+                const sessionData = await sessionService.getSession(parseInt(sessionId))
+                setSession(sessionData)
             } catch (error) {
+                console.error('Failed to load session:', error)
                 toast.error('Failed to load session')
+            } finally {
                 setIsLoading(false)
             }
         }
@@ -124,6 +128,10 @@ function SessionDetailContent() {
     const canStart = session.status === 'approved' && (isTeacher || isStudent)
     const canConfirmCompletion = session.status === 'in_progress' && (isTeacher || isStudent)
     const canCancel = ['pending', 'approved'].includes(session.status) && (isTeacher || isStudent)
+    // Allow video call for approved or in_progress sessions with online/hybrid mode
+    const canJoinVideoCall = ['approved', 'in_progress'].includes(session.status) && 
+                            ['online', 'hybrid'].includes(session.mode) && 
+                            (isTeacher || isStudent)
 
     return (
         <div className="min-h-screen bg-background">
@@ -278,21 +286,21 @@ function SessionDetailContent() {
                             {!showCancelForm ? (
                                 <div className="flex flex-wrap gap-2">
                                     {canStart && (
-                                        <>
-                                            <Button onClick={handleStartSession} disabled={isSubmitting}>
-                                                {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                                                Start Session
-                                            </Button>
-                                            <Button
-                                                onClick={() => setShowVideoCall(true)}
-                                                disabled={isSubmitting}
-                                                variant="secondary"
-                                                className="bg-blue-600 hover:bg-blue-700 text-white"
-                                            >
-                                                <Video className="mr-2 h-4 w-4" />
-                                                Start Video Call
-                                            </Button>
-                                        </>
+                                        <Button onClick={handleStartSession} disabled={isSubmitting}>
+                                            {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                                            Start Session
+                                        </Button>
+                                    )}
+
+                                    {canJoinVideoCall && (
+                                        <Button
+                                            onClick={() => setShowVideoCall(true)}
+                                            disabled={isSubmitting}
+                                            className="bg-blue-600 hover:bg-blue-700 text-white"
+                                        >
+                                            <Video className="mr-2 h-4 w-4" />
+                                            {session.status === 'in_progress' ? 'Join Video Call' : 'Start Video Call'}
+                                        </Button>
                                     )}
 
                                     {canConfirmCompletion && (
