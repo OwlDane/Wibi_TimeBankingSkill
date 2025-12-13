@@ -12,6 +12,7 @@ func AutoMigrate(db *gorm.DB) error {
 		name  string
 		model interface{}
 	}{
+		{"Admin", &Admin{}},
 		{"User", &User{}},
 		{"Skill", &Skill{}},
 		{"UserSkill", &UserSkill{}},

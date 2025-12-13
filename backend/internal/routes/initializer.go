@@ -17,6 +17,13 @@ func InitializeAuthHandler(db *gorm.DB) *handler.AuthHandler {
 	return handler.NewAuthHandler(authService)
 }
 
+// InitializeAdminHandler initializes admin handler with dependencies
+func InitializeAdminHandler(db *gorm.DB) *handler.AdminHandler {
+	adminRepo := repository.NewAdminRepository(db)
+	adminService := service.NewAdminService(adminRepo)
+	return handler.NewAdminHandler(adminService)
+}
+
 // InitializeSkillHandler initializes skill handler with dependencies
 func InitializeSkillHandler(db *gorm.DB) *handler.SkillHandler {
 	skillRepo := repository.NewSkillRepository(db)

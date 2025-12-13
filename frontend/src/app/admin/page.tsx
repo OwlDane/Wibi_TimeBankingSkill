@@ -6,7 +6,8 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Input } from '@/components/ui/input'
-import { ProtectedRoute } from '@/components/auth'
+import { AdminProtectedRoute } from '@/components/auth/AdminProtectedRoute'
+import { useAdminStore } from '@/stores/admin.store'
 import { analyticsService } from '@/lib/services/analytics.service'
 import { toast } from 'sonner'
 import { 
@@ -594,8 +595,8 @@ function AdminContent() {
 
 export default function AdminPage() {
     return (
-        <ProtectedRoute>
+        <AdminProtectedRoute>
             <AdminContent />
-        </ProtectedRoute>
+        </AdminProtectedRoute>
     )
 }

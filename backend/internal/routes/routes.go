@@ -18,6 +18,7 @@ import (
 func SetupRoutes(router *gin.Engine, db *gorm.DB, cfg *config.Config) {
 	// Initialize handlers
 	authHandler := InitializeAuthHandler(db)
+	adminHandler := InitializeAdminHandler(db)
 	skillHandler := InitializeSkillHandler(db)
 	userHandler := InitializeUserHandler(db)
 	transactionHandler := InitializeTransactionHandler(db)
@@ -98,6 +99,16 @@ func SetupRoutes(router *gin.Engine, db *gorm.DB, cfg *config.Config) {
 			auth.POST("/login", authHandler.Login)
 			auth.POST("/logout", middleware.AuthMiddleware(), authHandler.Logout)
 			auth.GET("/profile", middleware.AuthMiddleware(), authHandler.GetProfile)
+		}
+
+		// Admin routes (public login, protected others)
+		admin := v1.Group("/admin")
+		{
+			admin.POST("/login", adminHandler.Login)                                    // POST /api/v1/admin/login
+			admin.POST("/register", adminHandler.Register)                              // POST /api/v1/admin/register (only super_admin)
+			admin.GET("/profile", middleware.AuthMiddleware(), adminHandler.GetProfile) // GET /api/v1/admin/profile
+			admin.PUT("/profile", middleware.AuthMiddleware(), adminHandler.UpdateProfile) // PUT /api/v1/admin/profile
+			admin.POST("/change-password", middleware.AuthMiddleware(), adminHandler.ChangePassword) // POST /api/v1/admin/change-password
 		}
 
 		// Public Skills routes
