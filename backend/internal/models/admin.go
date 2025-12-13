@@ -16,7 +16,7 @@ type Admin struct {
 	Password  string          `gorm:"not null" json:"-"` // Never expose password
 	FullName  string          `gorm:"not null" json:"full_name"`
 	Role      string          `gorm:"default:'admin'" json:"role"` // 'admin', 'super_admin', 'moderator'
-	Permissions datatypes.JSONType `gorm:"type:jsonb" json:"permissions"` // ['manage_users', 'manage_content', 'view_analytics']
+	Permissions datatypes.JSONQuery `gorm:"type:jsonb" json:"permissions"` // ['manage_users', 'manage_content', 'view_analytics']
 	IsActive  bool            `gorm:"default:true" json:"is_active"`
 	LastLogin *time.Time      `json:"last_login"`
 	CreatedAt time.Time       `json:"created_at"`

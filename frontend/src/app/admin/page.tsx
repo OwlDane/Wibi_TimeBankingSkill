@@ -32,7 +32,8 @@ import {
     Edit,
     MoreHorizontal,
     Menu,
-    User
+    User,
+    Lock
 } from 'lucide-react'
 import type { PlatformAnalytics, SessionStatistic, CreditStatistic, SkillStatistic } from '@/types'
 
