@@ -43,13 +43,22 @@ export default function UsersPage() {
     const [users, setUsers] = useState<User[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [searchQuery, setSearchQuery] = useState('');
-    const [filterStatus, setFilterStatus] = useState<'all' | 'active' | 'suspended' | 'verification'>('all');
+    
+    // Initialize filter from URL params
+    const initialFilter = searchParams.get('filter');
+    const [filterStatus, setFilterStatus] = useState<'all' | 'active' | 'suspended' | 'verification'>(
+        (initialFilter && ['active', 'suspended', 'verification'].includes(initialFilter)) 
+            ? initialFilter as 'active' | 'suspended' | 'verification'
+            : 'all'
+    );
 
-    // Set filter from URL params
+    // Update filter when URL params change
     useEffect(() => {
         const filter = searchParams.get('filter');
         if (filter && ['active', 'suspended', 'verification'].includes(filter)) {
             setFilterStatus(filter as 'active' | 'suspended' | 'verification');
+        } else {
+            setFilterStatus('all');
         }
     }, [searchParams]);
 
@@ -121,12 +130,38 @@ export default function UsersPage() {
         );
     }
 
+    // Get dynamic title based on filter
+    const getPageTitle = () => {
+        switch (filterStatus) {
+            case 'active':
+                return 'Active Users';
+            case 'suspended':
+                return 'Suspended Users';
+            case 'verification':
+                return 'Unverified Users';
+            default:
+                return 'All Users';
+        }
+    };
+
     return (
         <div className="space-y-6">
             {/* Page Header */}
             <div>
-                <h1 className="text-3xl font-bold tracking-tight">Users Management</h1>
-                <p className="text-muted-foreground">Manage and monitor all platform users</p>
+                <div className="flex items-center gap-3">
+                    <h1 className="text-3xl font-bold tracking-tight">Users Management</h1>
+                    {filterStatus !== 'all' && (
+                        <Badge variant="secondary" className="text-sm">
+                            {getPageTitle()}
+                        </Badge>
+                    )}
+                </div>
+                <p className="text-muted-foreground">
+                    {filterStatus === 'all' 
+                        ? 'Manage and monitor all platform users'
+                        : `Viewing ${getPageTitle().toLowerCase()}`
+                    }
+                </p>
             </div>
 
             {/* Stats Cards */}
@@ -176,8 +211,17 @@ export default function UsersPage() {
                 <CardHeader>
                     <div className="flex items-center justify-between">
                         <div>
-                            <CardTitle>All Users</CardTitle>
-                            <CardDescription>View and manage all registered users</CardDescription>
+                            <CardTitle>{getPageTitle()}</CardTitle>
+                            <CardDescription>
+                                {filterStatus === 'all' 
+                                    ? 'View and manage all registered users'
+                                    : filterStatus === 'active'
+                                    ? 'Users who are currently active on the platform'
+                                    : filterStatus === 'suspended'
+                                    ? 'Users who have been suspended'
+                                    : 'Users pending email verification'
+                                }
+                            </CardDescription>
                         </div>
                         <div className="flex items-center gap-2">
                             <div className="relative">
