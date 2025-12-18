@@ -16,14 +16,33 @@ import {
     Settings,
     ChevronLeft,
     ChevronRight,
+    ChevronDown,
+    UserCheck,
+    UserX,
+    Clock,
+    CheckCircle,
+    XCircle,
+    Award,
+    Star,
+    TrendingUp,
+    FileText,
+    Image as ImageIcon,
+    ThumbsUp,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
-interface NavItem {
+interface SubMenuItem {
     title: string;
     href: string;
+    badge?: number;
+}
+
+interface NavItem {
+    title: string;
+    href?: string;
     icon: React.ElementType;
     badge?: number;
+    subItems?: SubMenuItem[];
 }
 
 const navItems: NavItem[] = [
@@ -34,13 +53,25 @@ const navItems: NavItem[] = [
     },
     {
         title: 'Users',
-        href: '/admin/users',
         icon: Users,
+        badge: 2,
+        subItems: [
+            { title: 'All Users', href: '/admin/users' },
+            { title: 'Active Users', href: '/admin/users/active' },
+            { title: 'Suspended', href: '/admin/users/suspended', badge: 2 },
+            { title: 'Verification', href: '/admin/users/verification' },
+        ],
     },
     {
         title: 'Sessions',
-        href: '/admin/sessions',
         icon: GraduationCap,
+        subItems: [
+            { title: 'All Sessions', href: '/admin/sessions' },
+            { title: 'Pending', href: '/admin/sessions/pending' },
+            { title: 'In Progress', href: '/admin/sessions/in-progress' },
+            { title: 'Completed', href: '/admin/sessions/completed' },
+            { title: 'Cancelled', href: '/admin/sessions/cancelled' },
+        ],
     },
     {
         title: 'Skills',
@@ -49,18 +80,33 @@ const navItems: NavItem[] = [
     },
     {
         title: 'Transactions',
-        href: '/admin/transactions',
         icon: CreditCard,
+        subItems: [
+            { title: 'All Transactions', href: '/admin/transactions' },
+            { title: 'Credits Earned', href: '/admin/transactions/earned' },
+            { title: 'Credits Spent', href: '/admin/transactions/spent' },
+            { title: 'Refunds', href: '/admin/transactions/refunds' },
+        ],
     },
     {
         title: 'Gamification',
-        href: '/admin/gamification',
         icon: Trophy,
+        subItems: [
+            { title: 'Badges', href: '/admin/gamification/badges' },
+            { title: 'Leaderboards', href: '/admin/gamification/leaderboards' },
+            { title: 'Achievements', href: '/admin/gamification/achievements' },
+        ],
     },
     {
         title: 'Community',
-        href: '/admin/community',
         icon: MessageSquare,
+        badge: 3,
+        subItems: [
+            { title: 'Forum', href: '/admin/community/forum' },
+            { title: 'Stories', href: '/admin/community/stories' },
+            { title: 'Reports', href: '/admin/community/reports', badge: 3 },
+            { title: 'Moderation', href: '/admin/community/moderation' },
+        ],
     },
     {
         title: 'Analytics',
@@ -81,6 +127,25 @@ interface AdminSidebarProps {
 
 export function AdminSidebar({ isCollapsed, onToggle }: AdminSidebarProps) {
     const pathname = usePathname();
+    const [expandedItems, setExpandedItems] = useState<string[]>([]);
+
+    const toggleExpand = (title: string) => {
+        setExpandedItems((prev) =>
+            prev.includes(title)
+                ? prev.filter((item) => item !== title)
+                : [...prev, title]
+        );
+    };
+
+    const isItemActive = (item: NavItem) => {
+        if (item.href) {
+            return pathname === item.href;
+        }
+        if (item.subItems) {
+            return item.subItems.some((sub) => pathname === sub.href);
+        }
+        return false;
+    };
 
     return (
         <aside
@@ -116,32 +181,98 @@ export function AdminSidebar({ isCollapsed, onToggle }: AdminSidebarProps) {
             {/* Navigation */}
             <nav className="space-y-1 p-2">
                 {navItems.map((item) => {
-                    const isActive = pathname === item.href;
-                    const Icon = item.icon;
+                    const isActive = isItemActive(item);
+                    const isExpanded = expandedItems.includes(item.title);
+                    const IconComponent = item.icon;
+                    const hasSubItems = item.subItems && item.subItems.length > 0;
 
+                    // Single item (no submenu)
+                    if (!hasSubItems) {
+                        return (
+                            <Link
+                                key={item.title}
+                                href={item.href || '#'}
+                                className={cn(
+                                    'flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors',
+                                    isActive
+                                        ? 'bg-primary text-primary-foreground'
+                                        : 'text-muted-foreground hover:bg-muted hover:text-foreground',
+                                    isCollapsed && 'justify-center'
+                                )}
+                                title={isCollapsed ? item.title : undefined}
+                            >
+                                <IconComponent className="h-5 w-5 shrink-0" />
+                                {!isCollapsed && <span className="flex-1">{item.title}</span>}
+                                {!isCollapsed && item.badge && (
+                                    <span className="flex h-5 w-5 items-center justify-center rounded-full bg-primary text-xs text-primary-foreground">
+                                        {item.badge}
+                                    </span>
+                                )}
+                            </Link>
+                        );
+                    }
+
+                    // Item with submenu
                     return (
-                        <Link
-                            key={item.href}
-                            href={item.href}
-                            className={cn(
-                                'flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors',
-                                isActive
-                                    ? 'bg-primary text-primary-foreground'
-                                    : 'text-muted-foreground hover:bg-muted hover:text-foreground',
-                                isCollapsed && 'justify-center'
+                        <div key={item.title}>
+                            <button
+                                onClick={() => !isCollapsed && toggleExpand(item.title)}
+                                className={cn(
+                                    'flex w-full items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors',
+                                    isActive
+                                        ? 'bg-muted text-foreground'
+                                        : 'text-muted-foreground hover:bg-muted hover:text-foreground',
+                                    isCollapsed && 'justify-center'
+                                )}
+                                title={isCollapsed ? item.title : undefined}
+                            >
+                                <IconComponent className="h-5 w-5 shrink-0" />
+                                {!isCollapsed && (
+                                    <>
+                                        <span className="flex-1 text-left">{item.title}</span>
+                                        {item.badge && (
+                                            <span className="flex h-5 w-5 items-center justify-center rounded-full bg-primary text-xs text-primary-foreground">
+                                                {item.badge}
+                                            </span>
+                                        )}
+                                        <ChevronDown
+                                            className={cn(
+                                                'h-4 w-4 transition-transform',
+                                                isExpanded && 'rotate-180'
+                                            )}
+                                        />
+                                    </>
+                                )}
+                            </button>
+
+                            {/* Submenu */}
+                            {!isCollapsed && isExpanded && (
+                                <div className="ml-4 mt-1 space-y-1 border-l pl-4">
+                                    {item.subItems?.map((subItem) => {
+                                        const isSubActive = pathname === subItem.href;
+                                        return (
+                                            <Link
+                                                key={subItem.href}
+                                                href={subItem.href}
+                                                className={cn(
+                                                    'flex items-center gap-2 rounded-lg px-3 py-1.5 text-sm transition-colors',
+                                                    isSubActive
+                                                        ? 'bg-primary text-primary-foreground'
+                                                        : 'text-muted-foreground hover:bg-muted hover:text-foreground'
+                                                )}
+                                            >
+                                                <span className="flex-1">{subItem.title}</span>
+                                                {subItem.badge && (
+                                                    <span className="flex h-4 w-4 items-center justify-center rounded-full bg-primary text-xs text-primary-foreground">
+                                                        {subItem.badge}
+                                                    </span>
+                                                )}
+                                            </Link>
+                                        );
+                                    })}
+                                </div>
                             )}
-                            title={isCollapsed ? item.title : ''}
-                        >
-                            <Icon className="h-5 w-5 shrink-0" />
-                            {!isCollapsed && (
-                                <span className="flex-1">{item.title}</span>
-                            )}
-                            {!isCollapsed && item.badge && (
-                                <span className="flex h-5 w-5 items-center justify-center rounded-full bg-primary text-xs text-primary-foreground">
-                                    {item.badge}
-                                </span>
-                            )}
-                        </Link>
+                        </div>
                     );
                 })}
             </nav>
