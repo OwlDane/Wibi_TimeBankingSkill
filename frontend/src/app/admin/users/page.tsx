@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { useSearchParams } from 'next/navigation';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -38,10 +39,19 @@ interface User {
 }
 
 export default function UsersPage() {
+    const searchParams = useSearchParams();
     const [users, setUsers] = useState<User[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [searchQuery, setSearchQuery] = useState('');
-    const [filterStatus, setFilterStatus] = useState<'all' | 'active' | 'suspended'>('all');
+    const [filterStatus, setFilterStatus] = useState<'all' | 'active' | 'suspended' | 'verification'>('all');
+
+    // Set filter from URL params
+    useEffect(() => {
+        const filter = searchParams.get('filter');
+        if (filter && ['active', 'suspended', 'verification'].includes(filter)) {
+            setFilterStatus(filter as 'active' | 'suspended' | 'verification');
+        }
+    }, [searchParams]);
 
     useEffect(() => {
         fetchUsers();
@@ -97,7 +107,8 @@ export default function UsersPage() {
         const matchesFilter =
             filterStatus === 'all' ||
             (filterStatus === 'active' && user.is_active) ||
-            (filterStatus === 'suspended' && !user.is_active);
+            (filterStatus === 'suspended' && !user.is_active) ||
+            (filterStatus === 'verification' && !user.is_verified);
 
         return matchesSearch && matchesFilter;
     });
