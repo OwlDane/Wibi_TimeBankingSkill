@@ -42,14 +42,23 @@ api.interceptors.response.use(
 
             // Unauthorized - Clear token and redirect to login
             if (status === 401) {
+                // Clear all auth tokens
                 localStorage.removeItem('token');
                 localStorage.removeItem('user');
+                localStorage.removeItem('admin_token');
+                localStorage.removeItem('admin');
 
                 // Only redirect if not already on login/register page
                 if (typeof window !== 'undefined' &&
                     !window.location.pathname.includes('/login') &&
                     !window.location.pathname.includes('/register')) {
-                    window.location.href = '/login';
+                    
+                    // Check if on admin page
+                    if (window.location.pathname.includes('/admin')) {
+                        window.location.href = '/admin/login';
+                    } else {
+                        window.location.href = '/login';
+                    }
                 }
             }
 
