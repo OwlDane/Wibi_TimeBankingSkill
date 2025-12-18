@@ -130,7 +130,7 @@ export function AdminSidebar({ isCollapsed, onToggle }: AdminSidebarProps) {
                                     : 'text-muted-foreground hover:bg-muted hover:text-foreground',
                                 isCollapsed && 'justify-center'
                             )}
-                            title={isCollapsed ? item.title : undefined}
+                            title={isCollapsed ? item.title : ''}
                         >
                             <Icon className="h-5 w-5 shrink-0" />
                             {!isCollapsed && (

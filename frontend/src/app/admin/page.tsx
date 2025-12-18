@@ -68,8 +68,8 @@ export default function AdminDashboard() {
                 />
                 <StatsCard
                     title="Total Credits"
-                    value={`${analytics?.total_credits_earned || 0} CR`}
-                    description={`${analytics?.total_credits_spent || 0} spent`}
+                    value={`${analytics?.total_credits_in_flow || 0} CR`}
+                    description="Credits in circulation"
                     icon={CreditCard}
                     trend={{
                         value: '+15.3%',
