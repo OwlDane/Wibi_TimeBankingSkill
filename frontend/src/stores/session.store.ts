@@ -44,9 +44,27 @@ const initialState = {
     error: null,
 };
 
+/**
+ * Session Store - Zustand store for session state management
+ * 
+ * Manages:
+ * - Session list (all, upcoming, pending requests)
+ * - Current session details
+ * - Loading and error states
+ * - Session actions (book, approve, reject, complete, cancel)
+ * 
+ * State Updates:
+ * - Automatically updates related lists when sessions change
+ * - Maintains consistency across session views
+ * - Handles optimistic updates for better UX
+ */
 export const useSessionStore = create<SessionState>((set, get) => ({
     ...initialState,
 
+    /**
+     * Fetch user's sessions with optional filtering
+     * Supports filtering by role (teacher/student) and status
+     */
     fetchSessions: async (params) => {
         set({ isLoading: true, error: null });
         try {

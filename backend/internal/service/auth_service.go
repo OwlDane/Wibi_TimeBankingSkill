@@ -24,7 +24,35 @@ func NewAuthService(userRepo *repository.UserRepository, transactionRepo *reposi
   }
 }
 
-// Register registers a new user
+// Register registers a new user account in the system
+// Creates user profile, grants welcome bonus credits, and generates JWT token
+//
+// Registration Flow:
+//   1. Validates registration input (email, password, username, etc)
+//   2. Checks email and username uniqueness
+//   3. Hashes password securely
+//   4. Creates user record with default settings
+//   5. Grants 3.0 welcome bonus credits (starting balance)
+//   6. Creates initial transaction record for audit trail
+//   7. Generates JWT authentication token
+//
+// Welcome Bonus:
+//   - New users receive 3.0 time credits to get started
+//   - This allows immediate booking of learning sessions
+//   - Credits are tracked in transaction history
+//
+// Validation Rules:
+//   - Password: Minimum 6 characters
+//   - Username: Minimum 3 characters, unique
+//   - Email: Must be valid format, unique
+//   - Full Name, School, Grade: Required fields
+//
+// Parameters:
+//   - req: Registration request with user details
+//
+// Returns:
+//   - *AuthResponse: JWT token and user profile
+//   - error: If validation fails, duplicate email/username, or database error
 func (s *AuthService) Register(req *dto.RegisterRequest) (*dto.AuthResponse, error) {
   // Validate input
   if err := s.validateRegistration(req); err != nil {
@@ -101,7 +129,28 @@ func (s *AuthService) Register(req *dto.RegisterRequest) (*dto.AuthResponse, err
   return response, nil
 }
 
-// Login authenticates a user
+// Login authenticates a user and generates JWT token
+// Validates credentials and checks account status before allowing access
+//
+// Authentication Flow:
+//   1. Finds user by email (case-insensitive)
+//   2. Validates user account is active
+//   3. Verifies password using secure hash comparison
+//   4. Generates JWT token with user ID and email
+//   5. Returns token and user profile
+//
+// Security:
+//   - Passwords are never returned in response
+//   - Uses bcrypt for secure password hashing
+//   - JWT tokens expire after configured duration
+//   - Inactive accounts cannot login
+//
+// Parameters:
+//   - req: Login request with email and password
+//
+// Returns:
+//   - *AuthResponse: JWT token and user profile
+//   - error: If invalid credentials, inactive account, or database error
 func (s *AuthService) Login(req *dto.LoginRequest) (*dto.AuthResponse, error) {
   // Find user by email
   user, err := s.userRepo.GetByEmail(strings.ToLower(req.Email))

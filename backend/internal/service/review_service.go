@@ -32,8 +32,44 @@ func NewReviewService(
 	}
 }
 
-// CreateReview creates a new review for a session
-// Only session participants can review, and only after session is completed
+// CreateReview creates a new review for a completed session
+// Implements bidirectional review system: both teacher and student can review each other
+//
+// Review Flow:
+//   1. Validates rating is within 1-5 range
+//   2. Validates session exists and is completed
+//   3. Determines review type (teacher reviewing student OR student reviewing teacher)
+//   4. Prevents duplicate reviews from same reviewer
+//   5. Creates review record with ratings and optional comment
+//   6. Updates user's average rating statistics
+//   7. Sends notification to reviewee
+//
+// Review Types:
+//   - ReviewTypeTeacher: Student reviewing the teacher
+//   - ReviewTypeStudent: Teacher reviewing the student
+//
+// Rating Components:
+//   - Overall rating (1-5 stars)
+//   - Communication rating (optional)
+//   - Punctuality rating (optional)
+//   - Knowledge rating (optional)
+//   - Tags (e.g., "Patient", "Clear Explanation", "Well Prepared")
+//
+// Parameters:
+//   - reviewerID: ID of user creating the review
+//   - req: Review request with session ID, rating, comment, tags
+//
+// Returns:
+//   - *ReviewResponse: Created review with all details
+//   - error: If validation fails, duplicate review, or database error
+//
+// Example:
+//   review, err := reviewService.CreateReview(userID, &CreateReviewRequest{
+//     SessionID: 123,
+//     Rating: 5,
+//     Comment: "Great teacher!",
+//     Tags: []string{"Patient", "Knowledgeable"},
+//   })
 func (s *ReviewService) CreateReview(reviewerID uint, req *dto.CreateReviewRequest) (*dto.ReviewResponse, error) {
 	// VALIDATION: Ensure rating is within valid range (1-5 stars)
 	if req.Rating < 1 || req.Rating > 5 {

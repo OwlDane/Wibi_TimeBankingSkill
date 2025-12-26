@@ -11,6 +11,22 @@ interface SessionTimerProps {
     onTimeUp?: () => void;
 }
 
+/**
+ * SessionTimer - Real-time countdown timer for active sessions
+ * 
+ * Displays remaining time and progress bar for an active session.
+ * Updates every second and triggers callback when time expires.
+ * 
+ * Features:
+ * - Real-time countdown (HH:MM:SS format)
+ * - Progress bar showing session completion percentage
+ * - Visual feedback when session expires (red border)
+ * - Automatic cleanup on unmount
+ * 
+ * @param startTime - ISO string of session start time
+ * @param durationHours - Session duration in hours
+ * @param onTimeUp - Optional callback when timer reaches zero
+ */
 export function SessionTimer({ startTime, durationHours, onTimeUp }: SessionTimerProps) {
     const [timeLeft, setTimeLeft] = useState<string>('');
     const [progress, setProgress] = useState(0);

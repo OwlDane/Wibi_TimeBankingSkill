@@ -96,7 +96,29 @@ func (s *SkillService) DeleteSkill(id uint) error {
 
 // User Skills Management
 
-// AddUserSkill adds a skill that user can teach
+// AddUserSkill adds a skill that user can teach to their profile
+// This allows users to list skills they can teach to others
+//
+// Flow:
+//   1. Validates user exists
+//   2. Validates skill exists in master skills
+//   3. Validates required fields (level, hourly rate)
+//   4. Checks for duplicate skill (user can't add same skill twice)
+//   5. Creates user skill record
+//
+// Skill Details:
+//   - Level: beginner, intermediate, advanced, expert
+//   - Hourly Rate: Credits per hour (default 1.0, can be adjusted)
+//   - Description: What specifically can be taught
+//   - Proof: Optional certificate/portfolio link
+//   - Availability: Online/offline preferences
+//
+// Parameters:
+//   - userID: ID of user adding the skill
+//   - userSkill: Skill details with level, description, rate, etc
+//
+// Returns:
+//   - error: If validation fails, duplicate skill, or database error
 func (s *SkillService) AddUserSkill(userID uint, userSkill *models.UserSkill) error {
 	// Validate user exists
 	_, err := s.userRepo.GetByID(userID)

@@ -34,6 +34,34 @@ func NewSessionService(
 }
 
 // BookSession creates a new session request from student to teacher
+// This is the entry point for students to request learning sessions with tutors
+//
+// Flow:
+//   1. Validates teacher skill exists and is available
+//   2. Checks student has sufficient credit balance
+//   3. Validates no duplicate active session exists
+//   4. Creates session with "pending" status
+//   5. Sends notification to teacher
+//
+// Credit Handling:
+//   - Credits are NOT deducted at booking time
+//   - Credits are held in escrow when teacher approves
+//   - Credits are transferred when session completes
+//
+// Parameters:
+//   - studentID: ID of student requesting the session
+//   - req: Session request details (skill, duration, schedule, etc)
+//
+// Returns:
+//   - *SessionResponse: Created session with all details
+//   - error: If validation fails, insufficient credits, or database error
+//
+// Example:
+//   session, err := sessionService.BookSession(studentID, &CreateSessionRequest{
+//     UserSkillID: 123,
+//     Duration: 1.5,
+//     ScheduledAt: time.Now().Add(24 * time.Hour),
+//   })
 func (s *SessionService) BookSession(studentID uint, req *dto.CreateSessionRequest) (*dto.SessionResponse, error) {
 	// Get the user skill to find the teacher
 	userSkill, err := s.skillRepo.GetUserSkillByID(req.UserSkillID)
@@ -254,7 +282,28 @@ func (s *SessionService) ApproveSession(teacherID, sessionID uint, req *dto.Appr
 	return dto.MapSessionToResponse(session), nil
 }
 
-// RejectSession allows teacher to reject a pending session
+// RejectSession allows teacher to reject a pending session request
+// This is called when teacher cannot or doesn't want to accept a session
+//
+// Flow:
+//   1. Validates teacher owns the session
+//   2. Validates session is in pending status
+//   3. Updates session status to "rejected"
+//   4. Records cancellation reason
+//   5. Sends notification to student
+//
+// Credit Handling:
+//   - No credits are deducted (session was never approved)
+//   - Student's credit balance remains unchanged
+//
+// Parameters:
+//   - teacherID: ID of teacher rejecting the session
+//   - sessionID: ID of session to reject
+//   - req: Rejection request with reason
+//
+// Returns:
+//   - *SessionResponse: Updated session with rejected status
+//   - error: If authorization fails or session not in valid state
 func (s *SessionService) RejectSession(teacherID, sessionID uint, req *dto.RejectSessionRequest) (*dto.SessionResponse, error) {
 	session, err := s.sessionRepo.GetByID(sessionID)
 	if err != nil {
@@ -284,6 +333,26 @@ func (s *SessionService) RejectSession(teacherID, sessionID uint, req *dto.Rejec
 }
 
 // StartSession marks a session as in progress
+// Can be called by either teacher or student to begin the session
+//
+// Flow:
+//   1. Validates user is part of the session (teacher or student)
+//   2. Validates session can be started (approved and scheduled)
+//   3. Updates status to "in_progress"
+//   4. Records actual start time
+//
+// Pre-conditions:
+//   - Session must be in "approved" status
+//   - Session must have a scheduled time
+//   - Scheduled time should be near current time (not enforced, but recommended)
+//
+// Parameters:
+//   - userID: ID of user starting the session (teacher or student)
+//   - sessionID: ID of session to start
+//
+// Returns:
+//   - *SessionResponse: Updated session with in_progress status
+//   - error: If user not authorized or session cannot be started
 func (s *SessionService) StartSession(userID, sessionID uint) (*dto.SessionResponse, error) {
 	session, err := s.sessionRepo.GetByID(sessionID)
 	if err != nil {
@@ -313,6 +382,29 @@ func (s *SessionService) StartSession(userID, sessionID uint) (*dto.SessionRespo
 }
 
 // ConfirmCompletion allows a participant to confirm session completion
+// Both teacher and student must confirm before credits are transferred
+//
+// Flow:
+//   1. Validates user is part of the session
+//   2. Validates session is in progress
+//   3. Marks user's confirmation (teacher_confirmed or student_confirmed)
+//   4. If both confirmed: completes session and transfers credits
+//   5. If only one confirmed: waits for other party's confirmation
+//
+// Credit Transfer:
+//   - Only happens when BOTH parties confirm
+//   - Credits are released from escrow to teacher
+//   - Student's held credits are permanently deducted
+//   - Teacher receives credits in their balance
+//
+// Parameters:
+//   - userID: ID of user confirming (teacher or student)
+//   - sessionID: ID of session to confirm
+//   - req: Completion request with optional notes
+//
+// Returns:
+//   - *SessionResponse: Updated session (may be completed if both confirmed)
+//   - error: If user not authorized or session not in valid state
 func (s *SessionService) ConfirmCompletion(userID, sessionID uint, req *dto.CompleteSessionRequest) (*dto.SessionResponse, error) {
 	session, err := s.sessionRepo.GetByID(sessionID)
 	if err != nil {
@@ -413,6 +505,28 @@ func (s *SessionService) completeSession(session *models.Session) error {
 }
 
 // CancelSession allows either party to cancel a session
+// Can cancel pending or approved sessions (not in-progress or completed)
+//
+// Flow:
+//   1. Validates user is part of the session
+//   2. Validates session can be cancelled (pending or approved only)
+//   3. If credits were held: refunds credits to student
+//   4. Updates session status to "cancelled"
+//   5. Records cancellation reason and who cancelled
+//
+// Credit Refund:
+//   - If session was approved (credits held): refunds to student
+//   - If session was pending (no credits held): no refund needed
+//   - Creates refund transaction for audit trail
+//
+// Parameters:
+//   - userID: ID of user cancelling (teacher or student)
+//   - sessionID: ID of session to cancel
+//   - req: Cancellation request with reason
+//
+// Returns:
+//   - *SessionResponse: Updated session with cancelled status
+//   - error: If user not authorized or session cannot be cancelled
 func (s *SessionService) CancelSession(userID, sessionID uint, req *dto.CancelSessionRequest) (*dto.SessionResponse, error) {
 	session, err := s.sessionRepo.GetByID(sessionID)
 	if err != nil {
@@ -481,7 +595,24 @@ func (s *SessionService) GetSession(userID, sessionID uint) (*dto.SessionRespons
 	return dto.MapSessionToResponse(session), nil
 }
 
-// GetUserSessions retrieves all sessions for a user
+// GetUserSessions retrieves all sessions for a user with filtering and pagination
+// Supports filtering by role (teacher/student) and status (pending/completed/etc)
+//
+// Filtering:
+//   - role: "teacher" (sessions as teacher), "student" (sessions as student), "" (all)
+//   - status: Filter by session status (pending, approved, completed, etc)
+//   - limit/offset: Pagination support
+//
+// Parameters:
+//   - userID: ID of user to get sessions for
+//   - role: Optional role filter ("teacher", "student", or empty for all)
+//   - status: Optional status filter (session status string)
+//   - limit: Maximum number of sessions to return
+//   - offset: Number of sessions to skip (for pagination)
+//
+// Returns:
+//   - *SessionListResponse: Paginated list of sessions with total count
+//   - error: If database error occurs
 func (s *SessionService) GetUserSessions(userID uint, role, status string, limit, offset int) (*dto.SessionListResponse, error) {
 	var sessions []models.Session
 	var total int64

@@ -36,6 +36,29 @@ func (s *UserService) GetUserProfile(userID uint) (*models.User, error) {
 }
 
 // UpdateUserProfile updates user profile information
+// Allows users to modify their profile details (name, bio, school, etc)
+//
+// Update Flow:
+//   1. Validates user exists
+//   2. Checks username uniqueness if username is being changed
+//   3. Updates allowed fields (name, bio, school, grade, location, etc)
+//   4. Preserves sensitive fields (email, password, credits)
+//
+// Allowed Fields:
+//   - FullName, Username, School, Grade, Major
+//   - Bio, Avatar, PhoneNumber, Location
+//
+// Restricted Fields (cannot be updated here):
+//   - Email (requires separate verification)
+//   - Password (use ChangePassword)
+//   - CreditBalance (managed by transaction system)
+//
+// Parameters:
+//   - userID: ID of user to update
+//   - updates: User model with fields to update (only provided fields are updated)
+//
+// Returns:
+//   - error: If user not found, username taken, or database error
 func (s *UserService) UpdateUserProfile(userID uint, updates *models.User) error {
 	// Get existing user
 	existingUser, err := s.userRepo.GetByID(userID)
@@ -83,7 +106,28 @@ func (s *UserService) UpdateUserProfile(userID uint, updates *models.User) error
 	return s.userRepo.Update(existingUser)
 }
 
-// ChangePassword changes user password
+// ChangePassword changes user password with security validation
+// Implements secure password change flow with old password verification
+//
+// Security Flow:
+//   1. Validates user exists
+//   2. Verifies old password matches current password
+//   3. Validates new password meets requirements (min 6 characters)
+//   4. Hashes new password securely
+//   5. Updates password in database
+//
+// Security Features:
+//   - Requires old password verification (prevents unauthorized changes)
+//   - Uses bcrypt for secure password hashing
+//   - Minimum password length enforcement
+//
+// Parameters:
+//   - userID: ID of user changing password
+//   - oldPassword: Current password for verification
+//   - newPassword: New password to set
+//
+// Returns:
+//   - error: If user not found, invalid old password, weak new password, or database error
 func (s *UserService) ChangePassword(userID uint, oldPassword, newPassword string) error {
 	// Get user
 	user, err := s.userRepo.GetByID(userID)
@@ -115,7 +159,27 @@ func (s *UserService) ChangePassword(userID uint, oldPassword, newPassword strin
 	return s.userRepo.Update(user)
 }
 
-// GetUserStats retrieves user statistics including calculated teaching/learning hours
+// GetUserStats retrieves comprehensive user statistics
+// Calculates teaching/learning hours from completed sessions and aggregates profile stats
+//
+// Statistics Included:
+//   - Credit balance and transaction totals
+//   - Session counts (as teacher and student)
+//   - Average ratings (as teacher and student)
+//   - Total teaching hours (sum of completed teaching sessions)
+//   - Total learning hours (sum of completed learning sessions)
+//
+// Calculation Method:
+//   - Teaching hours: Sum of duration from completed sessions where user is teacher
+//   - Learning hours: Sum of duration from completed sessions where user is student
+//   - Returns 0.0 if session repository not available (backward compatibility)
+//
+// Parameters:
+//   - userID: ID of user to get stats for
+//
+// Returns:
+//   - *UserStats: Comprehensive statistics object
+//   - error: If user not found or database error
 func (s *UserService) GetUserStats(userID uint) (*UserStats, error) {
 	user, err := s.userRepo.GetByID(userID)
 	if err != nil {
