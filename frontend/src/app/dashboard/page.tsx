@@ -14,6 +14,10 @@ import { useBadgeStore } from "@/stores/badge.store";
 import { useSkillStore } from "@/stores/skill.store";
 import SessionApprovalModal from "@/components/session/SessionApprovalModal";
 import TransactionDetailModal from "@/components/transaction/TransactionDetailModal";
+import { LoadingSpinner, LoadingSkeleton } from "@/components/ui/loading";
+import { ErrorState } from "@/components/ui/error-state";
+import { EmptyState } from "@/components/ui/empty-state";
+import { Calendar, Award, Receipt } from "lucide-react";
 import type { Transaction, Session, Skill } from "@/types";
 
 // Format date
@@ -109,7 +113,11 @@ function DashboardContent() {
                             </CardHeader>
                             <CardContent>
                                 <div className="text-3xl font-bold">
-                                    {isLoading ? '...' : (user?.credit_balance?.toFixed(1) || '0.0')}
+                                    {isLoading ? (
+                                        <LoadingSkeleton className="h-9 w-20" />
+                                    ) : (
+                                        user?.credit_balance?.toFixed(1) || '0.0'
+                                    )}
                                 </div>
                                 <p className="text-xs text-muted-foreground mt-1">Available credits</p>
                             </CardContent>
@@ -120,10 +128,18 @@ function DashboardContent() {
                             </CardHeader>
                             <CardContent>
                                 <div className="text-3xl font-bold">
-                                    {isLoading ? '...' : (stats?.total_sessions_as_teacher || 0)}
+                                    {isLoading ? (
+                                        <LoadingSkeleton className="h-9 w-16" />
+                                    ) : (
+                                        stats?.total_sessions_as_teacher || 0
+                                    )}
                                 </div>
                                 <p className="text-xs text-muted-foreground mt-1">
-                                    {stats?.total_credits_earned?.toFixed(1) || '0.0'} credits earned
+                                    {isLoading ? (
+                                        <LoadingSkeleton className="h-3 w-24 mt-1" />
+                                    ) : (
+                                        `${stats?.total_credits_earned?.toFixed(1) || '0.0'} credits earned`
+                                    )}
                                 </p>
                             </CardContent>
                         </Card>
@@ -133,10 +149,18 @@ function DashboardContent() {
                             </CardHeader>
                             <CardContent>
                                 <div className="text-3xl font-bold">
-                                    {isLoading ? '...' : (stats?.total_sessions_as_student || 0)}
+                                    {isLoading ? (
+                                        <LoadingSkeleton className="h-9 w-16" />
+                                    ) : (
+                                        stats?.total_sessions_as_student || 0
+                                    )}
                                 </div>
                                 <p className="text-xs text-muted-foreground mt-1">
-                                    {stats?.total_credits_spent?.toFixed(1) || '0.0'} credits spent
+                                    {isLoading ? (
+                                        <LoadingSkeleton className="h-3 w-24 mt-1" />
+                                    ) : (
+                                        `${stats?.total_credits_spent?.toFixed(1) || '0.0'} credits spent`
+                                    )}
                                 </p>
                             </CardContent>
                         </Card>
@@ -147,7 +171,11 @@ function DashboardContent() {
                             <CardContent>
                                 <div className="flex items-center">
                                     <div className="text-3xl font-bold">
-                                        {isLoading ? '...' : (stats?.average_rating_as_teacher?.toFixed(1) || 'N/A')}
+                                        {isLoading ? (
+                                            <LoadingSkeleton className="h-9 w-12" />
+                                        ) : (
+                                            stats?.average_rating_as_teacher?.toFixed(1) || 'N/A'
+                                        )}
                                     </div>
                                     <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-5 w-5 text-yellow-400 ml-1">
                                         <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
@@ -205,23 +233,16 @@ function DashboardContent() {
                             </Link>
                         </div>
                         {upcomingSessions.length === 0 ? (
-                            <Card>
-                                <CardContent className="py-12">
-                                    <div className="text-center text-muted-foreground">
-                                        <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="mx-auto mb-4 opacity-50">
-                                            <rect width="18" height="18" x="3" y="4" rx="2" ry="2" />
-                                            <line x1="16" x2="16" y1="2" y2="6" />
-                                            <line x1="8" x2="8" y1="2" y2="6" />
-                                            <line x1="3" x2="21" y1="10" y2="10" />
-                                        </svg>
-                                        <p className="text-lg font-medium">No upcoming sessions</p>
-                                        <p className="text-sm mt-1">Book a session from the marketplace to get started!</p>
-                                        <Link href="/marketplace">
-                                            <Button className="mt-4">Browse Skills</Button>
-                                        </Link>
-                                    </div>
-                                </CardContent>
-                            </Card>
+                            <EmptyState
+                                icon={Calendar}
+                                title="No upcoming sessions"
+                                description="Book a session from the marketplace to get started!"
+                                action={{
+                                    label: 'Browse Skills',
+                                    onClick: () => window.location.href = '/marketplace',
+                                }}
+                                variant="card"
+                            />
                         ) : (
                             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                                 {upcomingSessions.map((session: Session) => (
@@ -278,7 +299,7 @@ function DashboardContent() {
                         </div>
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
                             {skills.slice(0, 4).map((skill: Skill) => (
-                                <Card key={skill.id} className="overflow-hidden hover:shadow-md transition-shadow">
+                                    <Card key={skill.id} className="overflow-hidden hover:shadow-lg hover:-translate-y-1 transition-all duration-200">
                                     <div className="h-32 bg-muted flex items-center justify-center text-4xl">
                                         {skill.icon || '📚'}
                                     </div>
@@ -317,13 +338,16 @@ function DashboardContent() {
                             <CardContent className="p-0">
                                 {isLoading ? (
                                     <div className="p-8 text-center">
-                                        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
+                                        <LoadingSpinner size="lg" />
                                         <p className="mt-2 text-muted-foreground">Loading transactions...</p>
                                     </div>
                                 ) : transactions.length === 0 ? (
-                                    <div className="p-8 text-center text-muted-foreground">
-                                        <p>No transactions yet</p>
-                                    </div>
+                                    <EmptyState
+                                        icon={Receipt}
+                                        title="No transactions yet"
+                                        description="Your transaction history will appear here."
+                                        variant="compact"
+                                    />
                                 ) : (
                                     <div className="overflow-x-auto">
                                         <table className="w-full">
@@ -339,7 +363,7 @@ function DashboardContent() {
                                                 {transactions.map((transaction: Transaction) => (
                                                     <tr 
                                                         key={transaction.id} 
-                                                        className="border-b last:border-0 hover:bg-muted/50 cursor-pointer"
+                                                        className="border-b last:border-0 hover:bg-muted/50 cursor-pointer transition-colors duration-150"
                                                         onClick={() => {
                                                             setSelectedTransaction(transaction);
                                                             setIsTransactionModalOpen(true);
@@ -370,21 +394,12 @@ function DashboardContent() {
                             </Link>
                         </div>
                         {userBadges.length === 0 ? (
-                            <Card>
-                                <CardContent className="py-12">
-                                    <div className="text-center text-muted-foreground">
-                                        <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="mx-auto mb-4 opacity-50">
-                                            <path d="M6 10c0-4.4 3.6-8 8-8s8 3.6 8 8-3.6 8-8 8h-8" />
-                                            <polyline points="15 14 18 10 21 14" />
-                                            <path d="M6 14H3" />
-                                            <path d="M6 18H3" />
-                                            <path d="M6 22H3" />
-                                        </svg>
-                                        <p className="text-lg font-medium">No badges yet</p>
-                                        <p className="text-sm mt-1">Complete sessions and achievements to earn badges!</p>
-                                    </div>
-                                </CardContent>
-                            </Card>
+                            <EmptyState
+                                icon={Award}
+                                title="No badges yet"
+                                description="Complete sessions and achievements to earn badges!"
+                                variant="card"
+                            />
                         ) : (
                             <div className="flex flex-wrap gap-4">
                                 {userBadges.slice(0, 6).map((userBadge: any) => (
