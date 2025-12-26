@@ -15,13 +15,14 @@ import {
     Settings,
     ChevronLeft,
     ChevronRight,
+    type LucideIcon,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
 interface NavItem {
     title: string;
     href: string;
-    icon: React.ElementType;
+    icon: LucideIcon;
 }
 
 const navItems: NavItem[] = [
