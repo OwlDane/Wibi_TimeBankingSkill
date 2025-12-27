@@ -186,3 +186,9 @@ func InitializeNotificationWebSocket(db *gorm.DB) *websocket.NotificationWebSock
 	return websocket.NewNotificationWebSocket(notificationService)
 }
 
+// InitializeAvailabilityHandler initializes availability handler with dependencies
+func InitializeAvailabilityHandler(db *gorm.DB) *handler.AvailabilityHandler {
+	availabilityRepo := repository.NewAvailabilityRepository(db)
+	availabilityService := service.NewAvailabilityService(availabilityRepo)
+	return handler.NewAvailabilityHandler(availabilityService)
+}

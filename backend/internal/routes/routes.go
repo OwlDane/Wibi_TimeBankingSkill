@@ -34,6 +34,7 @@ func SetupRoutes(router *gin.Engine, db *gorm.DB, cfg *config.Config) {
 	whiteboardHandler := InitializeWhiteboardHandler(db)
 	progressHandler := InitializeSkillProgressHandler(db)
 	analyticsHandler := InitializeAnalyticsHandler(db)
+	availabilityHandler := InitializeAvailabilityHandler(db)
 
 	// WebSocket endpoints (before auth middleware)
 	router.GET("/api/v1/ws/whiteboard/:sessionId", func(c *gin.Context) {
@@ -127,6 +128,8 @@ func SetupRoutes(router *gin.Engine, db *gorm.DB, cfg *config.Config) {
 			publicUsers.GET("/:id/reviews", reviewHandler.GetUserReviews)          // GET /api/v1/users/1/reviews
 			publicUsers.GET("/:id/reviews/:type", reviewHandler.GetUserReviewsByType) // GET /api/v1/users/1/reviews/teacher
 			publicUsers.GET("/:id/rating-summary", reviewHandler.GetUserRatingSummary) // GET /api/v1/users/1/rating-summary
+			publicUsers.GET("/:id/availability", availabilityHandler.GetUserAvailability) // GET /api/v1/users/1/availability
+			publicUsers.GET("/:id/availability/check", availabilityHandler.CheckAvailability) // GET /api/v1/users/1/availability/check?day=1&time=14:00
 		}
 
 		// Public Badges
@@ -177,6 +180,11 @@ func SetupRoutes(router *gin.Engine, db *gorm.DB, cfg *config.Config) {
 				// Video Session Management
 				user.GET("/video-history", videoSessionHandler.GetVideoHistory)      // GET /api/v1/user/video-history
 				user.GET("/video-stats", videoSessionHandler.GetVideoStats)          // GET /api/v1/user/video-stats
+
+				// Availability Schedule Management
+				user.GET("/availability", availabilityHandler.GetMyAvailability)     // GET /api/v1/user/availability
+				user.PUT("/availability", availabilityHandler.SetMyAvailability)     // PUT /api/v1/user/availability
+				user.DELETE("/availability", availabilityHandler.ClearMyAvailability) // DELETE /api/v1/user/availability
 			}
 
 			// Admin Skills Management (future: add admin middleware)
