@@ -1,155 +1,176 @@
-package handler
-
+package service
+ 
 import (
-	"net/http"
-	"strconv"
-
-	"github.com/gin-gonic/gin"
+	"errors"
+	"fmt"
+	"time"
+ 
+	"github.com/timebankingskill/backend/internal/config"
 	"github.com/timebankingskill/backend/internal/dto"
-	"github.com/timebankingskill/backend/internal/service"
-	"github.com/timebankingskill/backend/internal/utils"
+	"github.com/timebankingskill/backend/internal/models"
+	"github.com/timebankingskill/backend/internal/repository"
 )
-
-// VideoSessionHandler handles video session HTTP requests
-type VideoSessionHandler struct {
-	videoSessionService *service.VideoSessionService
+ 
+// VideoSessionService handles video call business logic
+type VideoSessionService struct {
+	videoSessionRepo *repository.VideoSessionRepository
+	sessionRepo      *repository.SessionRepository
+	userRepo         *repository.UserRepository
+	notificationSvc  *NotificationService
+	config           *config.Config
 }
-
-// NewVideoSessionHandler creates a new video session handler
-func NewVideoSessionHandler(videoSessionService *service.VideoSessionService) *VideoSessionHandler {
-	return &VideoSessionHandler{videoSessionService: videoSessionService}
+ 
+// NewVideoSessionServiceWithNotification creates a new video session service
+func NewVideoSessionServiceWithNotification(
+	videoSessionRepo *repository.VideoSessionRepository,
+	sessionRepo *repository.SessionRepository,
+	userRepo *repository.UserRepository,
+	notificationSvc *NotificationService,
+	cfg *config.Config,
+) *VideoSessionService {
+	return &VideoSessionService{
+		videoSessionRepo: videoSessionRepo,
+		sessionRepo:      sessionRepo,
+		userRepo:         userRepo,
+		notificationSvc:  notificationSvc,
+		config:           cfg,
+	}
 }
-
-// StartVideoSession starts a new video session
-// POST /api/v1/sessions/:id/video/start
-func (h *VideoSessionHandler) StartVideoSession(c *gin.Context) {
-	userID, exists := c.Get("user_id")
-	if !exists {
-		utils.SendError(c, http.StatusUnauthorized, "Unauthorized", nil)
-		return
-	}
-
-	sessionID, err := strconv.ParseUint(c.Param("id"), 10, 32)
+ 
+// StartVideoSession starts a new video call for an existing session
+func (s *VideoSessionService) StartVideoSession(userID uint, sessionID uint) (*dto.StartVideoSessionResponse, error) {
+	session, err := s.sessionRepo.GetByID(sessionID)
 	if err != nil {
-		utils.SendError(c, http.StatusBadRequest, "Invalid session ID", err)
-		return
+		return nil, err
 	}
-
-	response, err := h.videoSessionService.StartVideoSession(userID.(uint), uint(sessionID))
+ 
+	// Verify user is part of session
+	if session.TeacherID != userID && session.StudentID != userID {
+		return nil, errors.New("you are not authorized to start this video session")
+	}
+ 
+	// Room ID is typically a combination of session ID and a unique string
+	roomID := fmt.Sprintf("wibi-session-%d-%d", sessionID, time.Now().Unix())
+ 
+	now := time.Now()
+	videoSession := &models.VideoSession{
+		SessionID: sessionID,
+		RoomID:    roomID,
+		StartedAt: &now,
+		Status:    "active",
+	}
+ 
+	created, err := s.videoSessionRepo.CreateVideoSession(videoSession)
 	if err != nil {
-		utils.SendError(c, http.StatusBadRequest, err.Error(), err)
-		return
+		return nil, err
 	}
-
-	utils.SendSuccess(c, http.StatusCreated, "Video session started successfully", response)
+ 
+	// Generate Jitsi URL
+	jitsiURL := fmt.Sprintf("%s/%s", s.config.Jitsi.BaseURL, roomID)
+ 
+	return &dto.StartVideoSessionResponse{
+		ID:       created.ID,
+		RoomID:   created.RoomID,
+		JitsiURL: jitsiURL,
+		Status:   created.Status,
+		// Token: would be generated here if using Jitsi as a Service auth
+	}, nil
 }
-
-// EndVideoSession ends a video session
-// POST /api/v1/sessions/:id/video/end
-func (h *VideoSessionHandler) EndVideoSession(c *gin.Context) {
-	userID, exists := c.Get("user_id")
-	if !exists {
-		utils.SendError(c, http.StatusUnauthorized, "Unauthorized", nil)
-		return
-	}
-
-	sessionID, err := strconv.ParseUint(c.Param("id"), 10, 32)
+ 
+// EndVideoSession marks a video session as completed
+func (s *VideoSessionService) EndVideoSession(userID uint, sessionID uint, duration int) (*dto.VideoSessionResponse, error) {
+	videoSession, err := s.videoSessionRepo.GetActiveVideoSession(sessionID)
 	if err != nil {
-		utils.SendError(c, http.StatusBadRequest, "Invalid session ID", err)
-		return
+		return nil, err
 	}
-
-	var req dto.EndVideoSessionRequest
-	if err := c.ShouldBindJSON(&req); err != nil {
-		utils.SendError(c, http.StatusBadRequest, "Invalid request", err)
-		return
-	}
-
-	response, err := h.videoSessionService.EndVideoSession(userID.(uint), uint(sessionID), req.Duration)
+ 
+	now := time.Now()
+	videoSession.EndedAt = &now
+	videoSession.Duration = duration
+	videoSession.Status = "completed"
+ 
+	updated, err := s.videoSessionRepo.UpdateVideoSession(videoSession.ID, videoSession)
 	if err != nil {
-		utils.SendError(c, http.StatusBadRequest, err.Error(), err)
-		return
+		return nil, err
 	}
-
-	utils.SendSuccess(c, http.StatusOK, "Video session ended successfully", response)
+ 
+	return &dto.VideoSessionResponse{
+		ID:               updated.ID,
+		SessionID:        updated.SessionID,
+		RoomID:           updated.RoomID,
+		StartedAt:        updated.StartedAt,
+		EndedAt:          updated.EndedAt,
+		Duration:         updated.Duration,
+		ParticipantCount: updated.ParticipantCount,
+		Status:           updated.Status,
+		CreatedAt:        updated.CreatedAt,
+		UpdatedAt:        updated.UpdatedAt,
+	}, nil
 }
-
-// GetVideoSessionStatus gets the status of a video session
-// GET /api/v1/sessions/:id/video/status
-func (h *VideoSessionHandler) GetVideoSessionStatus(c *gin.Context) {
-	userID, exists := c.Get("user_id")
-	if !exists {
-		utils.SendError(c, http.StatusUnauthorized, "Unauthorized", nil)
-		return
-	}
-
-	sessionID, err := strconv.ParseUint(c.Param("id"), 10, 32)
+ 
+// GetVideoSessionStatus retrieves status of a video call
+func (s *VideoSessionService) GetVideoSessionStatus(userID uint, sessionID uint) (*dto.VideoSessionResponse, error) {
+	videoSession, err := s.videoSessionRepo.GetVideoSessionBySessionID(sessionID)
 	if err != nil {
-		utils.SendError(c, http.StatusBadRequest, "Invalid session ID", err)
-		return
+		return nil, err
 	}
-
-	response, err := h.videoSessionService.GetVideoSessionStatus(userID.(uint), uint(sessionID))
-	if err != nil {
-		utils.SendError(c, http.StatusBadRequest, err.Error(), err)
-		return
-	}
-
-	utils.SendSuccess(c, http.StatusOK, "Video session status retrieved successfully", response)
+ 
+	return &dto.VideoSessionResponse{
+		ID:               videoSession.ID,
+		SessionID:        videoSession.SessionID,
+		RoomID:           videoSession.RoomID,
+		StartedAt:        videoSession.StartedAt,
+		EndedAt:          videoSession.EndedAt,
+		Duration:         videoSession.Duration,
+		ParticipantCount: videoSession.ParticipantCount,
+		Status:           videoSession.Status,
+		CreatedAt:        videoSession.CreatedAt,
+		UpdatedAt:        videoSession.UpdatedAt,
+	}, nil
 }
-
-// GetVideoHistory gets video call history for the current user
-// GET /api/v1/user/video-history
-func (h *VideoSessionHandler) GetVideoHistory(c *gin.Context) {
-	userID, exists := c.Get("user_id")
-	if !exists {
-		utils.SendError(c, http.StatusUnauthorized, "Unauthorized", nil)
-		return
+ 
+// GetVideoHistory returns completed video sessions for a user
+func (s *VideoSessionService) GetVideoHistory(userID uint, limit int, offset int) ([]dto.VideoHistoryResponse, int64, error) {
+	history, total, err := s.videoSessionRepo.GetUserVideoHistory(userID, limit, offset)
+	if err != nil {
+		return nil, 0, err
 	}
-
-	limit := 10
-	offset := 0
-
-	if l := c.Query("limit"); l != "" {
-		if parsed, err := strconv.Atoi(l); err == nil && parsed > 0 {
-			limit = parsed
+ 
+	var response []dto.VideoHistoryResponse
+	for _, vs := range history {
+		partnerName := ""
+		if vs.Session != nil {
+			if vs.Session.TeacherID == userID {
+				// Partner is student
+				student, _ := s.userRepo.GetByID(vs.Session.StudentID)
+				if student != nil {
+					partnerName = student.FullName
+				}
+			} else {
+				// Partner is teacher
+				teacher, _ := s.userRepo.GetByID(vs.Session.TeacherID)
+				if teacher != nil {
+					partnerName = teacher.FullName
+				}
+			}
 		}
+ 
+		response = append(response, dto.VideoHistoryResponse{
+			ID:               vs.ID,
+			SessionID:        vs.SessionID,
+			SkillName:        vs.Session.Title, // Assuming Title is used as skill name reference in session
+			PartnerName:      partnerName,
+			StartedAt:        vs.StartedAt,
+			Duration:         vs.Duration,
+			ParticipantCount: vs.ParticipantCount,
+			Status:           vs.Status,
+		})
 	}
-
-	if o := c.Query("offset"); o != "" {
-		if parsed, err := strconv.Atoi(o); err == nil && parsed >= 0 {
-			offset = parsed
-		}
-	}
-
-	history, total, err := h.videoSessionService.GetVideoHistory(userID.(uint), limit, offset)
-	if err != nil {
-		utils.SendError(c, http.StatusInternalServerError, "Failed to fetch video history", err)
-		return
-	}
-
-	utils.SendSuccess(c, http.StatusOK, "Video history retrieved successfully", gin.H{
-		"history": history,
-		"total":   total,
-		"limit":   limit,
-		"offset":  offset,
-	})
+ 
+	return response, total, nil
 }
-
-// GetVideoStats gets video session statistics for the current user
-// GET /api/v1/user/video-stats
-func (h *VideoSessionHandler) GetVideoStats(c *gin.Context) {
-	userID, exists := c.Get("user_id")
-	if !exists {
-		utils.SendError(c, http.StatusUnauthorized, "Unauthorized", nil)
-		return
-	}
-
-	stats, err := h.videoSessionService.GetVideoStats(userID.(uint))
-	if err != nil {
-		utils.SendError(c, http.StatusInternalServerError, "Failed to fetch video stats", err)
-		return
-	}
-
-	utils.SendSuccess(c, http.StatusOK, "Video statistics retrieved successfully", stats)
+ 
+// GetVideoStats returns video calling statistics
+func (s *VideoSessionService) GetVideoStats(userID uint) (map[string]interface{}, error) {
+	return s.videoSessionRepo.GetVideoSessionStats(userID)
 }
