@@ -29,7 +29,8 @@ type User struct {
 	Location    string  `json:"location"`     // City/Region
 	
 	// Time Banking
-	CreditBalance float64 `gorm:"default:3.0" json:"credit_balance"` // Starting with 3 free credits
+	CreditBalance float64 `gorm:"default:3.0" json:"credit_balance"` // Total balance
+	CreditHeld    float64 `gorm:"default:0" json:"credit_held"`       // Credits in escrow/pending sessions
 	TotalEarned   float64 `gorm:"default:0" json:"total_earned"`
 	TotalSpent    float64 `gorm:"default:0" json:"total_spent"`
 	

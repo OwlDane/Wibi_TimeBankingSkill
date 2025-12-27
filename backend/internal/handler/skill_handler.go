@@ -29,6 +29,15 @@ func (h *SkillHandler) GetSkills(c *gin.Context) {
 	pageStr := c.DefaultQuery("page", "1")
 	category := c.Query("category")
 	search := c.Query("search")
+	dayStr := c.Query("day")
+
+	var dayOfWeek *int
+	if dayStr != "" {
+		day, err := strconv.Atoi(dayStr)
+		if err == nil && day >= 0 && day <= 6 {
+			dayOfWeek = &day
+		}
+	}
 
 	limit, err := strconv.Atoi(limitStr)
 	if err != nil || limit <= 0 || limit > 100 {
@@ -44,7 +53,7 @@ func (h *SkillHandler) GetSkills(c *gin.Context) {
 
 	// Try to get from cache if no search/filter
 	cache := utils.GetCache()
-	if search == "" && category == "" && page == 1 {
+	if search == "" && category == "" && dayOfWeek == nil && page == 1 {
 		if cached, found := cache.Get(utils.CacheKeySkills); found {
 			utils.SendSuccess(c, http.StatusOK, "Skills retrieved from cache", cached)
 			return
@@ -52,7 +61,7 @@ func (h *SkillHandler) GetSkills(c *gin.Context) {
 	}
 
 	// Get skills from service
-	skills, total, err := h.skillService.GetAllSkills(limit, offset, category, search)
+	skills, total, err := h.skillService.GetAllSkills(limit, offset, category, search, dayOfWeek)
 	if err != nil {
 		utils.SendError(c, http.StatusInternalServerError, "Failed to fetch skills", err)
 		return

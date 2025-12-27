@@ -44,6 +44,10 @@ type Skill struct {
 	TotalTeachers int `gorm:"default:0" json:"total_teachers"`
 	TotalLearners int `gorm:"default:0" json:"total_learners"`
 	
+	// Transient fields for marketplace
+	MinRate float64 `gorm:"-" json:"min_rate"`
+	MaxRate float64 `gorm:"-" json:"max_rate"`
+	
 	// Relationships
 	UserSkills []UserSkill `gorm:"foreignKey:SkillID" json:"-"`
 }

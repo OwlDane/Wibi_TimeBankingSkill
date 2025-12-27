@@ -9,7 +9,7 @@ import (
 
 // SkillRepositoryInterface defines the contract for skill repository
 type SkillRepositoryInterface interface {
-	GetAllWithFilters(limit, offset int, category, search string) ([]models.Skill, int64, error)
+	GetAllWithFilters(limit, offset int, category, search string, dayOfWeek *int) ([]models.Skill, int64, error)
 	GetByID(id uint) (*models.Skill, error)
 	Create(skill *models.Skill) error
 	Update(skill *models.Skill) error
@@ -79,18 +79,25 @@ func (r *SkillRepository) Create(skill *models.Skill) error {
 }
 
 // GetAllWithFilters returns skills with pagination and filters
-func (r *SkillRepository) GetAllWithFilters(limit, offset int, category, search string) ([]models.Skill, int64, error) {
+func (r *SkillRepository) GetAllWithFilters(limit, offset int, category, search string, dayOfWeek *int) ([]models.Skill, int64, error) {
 	var skills []models.Skill
 	var total int64
 
-	query := r.db.Model(&models.Skill{})
+	query := r.db.Model(&models.Skill{}).
+		Select("skills.*, COALESCE(MIN(user_skills.hourly_rate), 0) as min_rate, COALESCE(MAX(user_skills.hourly_rate), 0) as max_rate").
+		Joins("LEFT JOIN user_skills ON user_skills.skill_id = skills.id").
+		Group("skills.id")
 
 	// Apply filters
 	if category != "" {
-		query = query.Where("category = ?", category)
+		query = query.Where("skills.category = ?", category)
 	}
 	if search != "" {
-		query = query.Where("name ILIKE ? OR description ILIKE ?", "%"+search+"%", "%"+search+"%")
+		query = query.Where("skills.name ILIKE ? OR skills.description ILIKE ?", "%"+search+"%", "%"+search+"%")
+	}
+	if dayOfWeek != nil {
+		query = query.Joins("JOIN availabilities ON availabilities.user_id = user_skills.user_id").
+			Where("availabilities.day_of_week = ? AND availabilities.is_active = ?", *dayOfWeek, true)
 	}
 
 	// Count total

@@ -100,9 +100,10 @@ func (s *SessionService) BookSession(studentID uint, req *dto.CreateSessionReque
 		creditAmount = req.Duration // Default 1:1 ratio
 	}
 
-	// Check if student has enough credits
-	if student.CreditBalance < creditAmount {
-		return nil, errors.New("insufficient credit balance")
+	// Check if student has enough credits (Available = Total - Held)
+	availableBalance := student.CreditBalance - student.CreditHeld
+	if availableBalance < creditAmount {
+		return nil, errors.New("insufficient available credit balance")
 	}
 
 	// Validate scheduled time is in the future
@@ -214,27 +215,27 @@ func (s *SessionService) ApproveSession(teacherID, sessionID uint, req *dto.Appr
 		return nil, errors.New("student not found")
 	}
 
-	// Credit validation: ensure student still has enough credits
-	// (Credits may have been spent on other sessions since booking)
-	if student.CreditBalance < session.CreditAmount {
-		return nil, errors.New("student has insufficient credits")
+	// Credit validation: ensure student still has enough available credits
+	// Available = Total - Held
+	availableBalance := student.CreditBalance - student.CreditHeld
+	if availableBalance < session.CreditAmount {
+		return nil, errors.New("student has insufficient available credits")
 	}
 
-	// CREDIT HOLD PHASE: Deduct credits from student's available balance
+	// CREDIT HOLD PHASE: Mark credits as held
 	// These credits are now in escrow and cannot be used for other sessions
-	student.CreditBalance -= session.CreditAmount
+	student.CreditHeld += session.CreditAmount
 	if err := s.userRepo.Update(student); err != nil {
 		return nil, errors.New("failed to hold credits")
 	}
 
 	// Record the hold transaction for audit trail
-	// This tracks the credit movement for transparency
 	holdTransaction := &models.Transaction{
 		UserID:        session.StudentID,
 		Type:          models.TransactionHold,
-		Amount:        -session.CreditAmount,
-		BalanceBefore: student.CreditBalance + session.CreditAmount, // Balance before hold
-		BalanceAfter:  student.CreditBalance,                         // Balance after hold
+		Amount:        session.CreditAmount, // Positive amount stored as "held"
+		BalanceBefore: student.CreditBalance,
+		BalanceAfter:  student.CreditBalance,
 		Description:   "Credit hold for session: " + session.Title,
 		SessionID:     &session.ID,
 	}
@@ -597,30 +598,55 @@ func (s *SessionService) completeSession(session *models.Session) error {
 	session.CreditReleased = true
 
 	// CREDIT TRANSFER: Release held credits to teacher
-	// Fetch teacher from database
+	// Fetch parties from database
 	teacher, err := s.userRepo.GetByID(session.TeacherID)
 	if err != nil {
 		return errors.New("teacher not found")
 	}
 
-	// Add held credits to teacher's balance
-	teacher.CreditBalance += session.CreditAmount
-	if err := s.userRepo.Update(teacher); err != nil {
-		return errors.New("failed to transfer credits")
+	student, err := s.userRepo.GetByID(session.StudentID)
+	if err != nil {
+		return errors.New("student not found")
 	}
 
-	// Record the earned transaction for audit trail
-	// This documents the credit transfer from student to teacher
+	// RELEASE AND TRANSFER:
+	// 1. releases from student's held credits
+	// 2. deduct from student's total balance
+	// 3. add to teacher's total balance
+	student.CreditHeld -= session.CreditAmount
+	student.CreditBalance -= session.CreditAmount
+	teacher.CreditBalance += session.CreditAmount
+
+	if err := s.userRepo.Update(student); err != nil {
+		return errors.New("failed to update student balance")
+	}
+	if err := s.userRepo.Update(teacher); err != nil {
+		return errors.New("failed to transfer credits to teacher")
+	}
+
+	// Record the earned transaction for teacher
 	earnedTransaction := &models.Transaction{
 		UserID:        session.TeacherID,
 		Type:          models.TransactionEarned,
 		Amount:        session.CreditAmount,
 		BalanceBefore: teacher.CreditBalance - session.CreditAmount,
 		BalanceAfter:  teacher.CreditBalance,
-		Description:   "Earned from session: " + session.Title,
+		Description:   "Earned from teaching session: " + session.Title,
 		SessionID:     &session.ID,
 	}
 	_ = s.transactionRepo.Create(earnedTransaction)
+
+	// Record the spent transaction for student (finalized)
+	spentTransaction := &models.Transaction{
+		UserID:        session.StudentID,
+		Type:          models.TransactionSpent,
+		Amount:        -session.CreditAmount,
+		BalanceBefore: student.CreditBalance + session.CreditAmount,
+		BalanceAfter:  student.CreditBalance,
+		Description:   "Spent on learning session: " + session.Title,
+		SessionID:     &session.ID,
+	}
+	_ = s.transactionRepo.Create(spentTransaction)
 
 	// Update skill statistics
 	// Increment session count for this teaching skill
@@ -673,26 +699,26 @@ func (s *SessionService) CancelSession(userID, sessionID uint, req *dto.CancelSe
 		return nil, errors.New("session cannot be cancelled")
 	}
 
-	// If credits were held, refund them
+	// If credits were held, release them back to student's available balance
 	if session.CreditHeld && !session.CreditReleased {
 		student, err := s.userRepo.GetByID(session.StudentID)
 		if err != nil {
 			return nil, errors.New("student not found")
 		}
 
-		student.CreditBalance += session.CreditAmount
+		student.CreditHeld -= session.CreditAmount
 		if err := s.userRepo.Update(student); err != nil {
-			return nil, errors.New("failed to refund credits")
+			return nil, errors.New("failed to release held credits")
 		}
 
-		// Create refund transaction
+		// Record refund transaction (release held credits)
 		refundTransaction := &models.Transaction{
 			UserID:        session.StudentID,
 			Type:          models.TransactionRefund,
-			Amount:        session.CreditAmount,
-			BalanceBefore: student.CreditBalance - session.CreditAmount,
+			Amount:        -session.CreditAmount, // release from held
+			BalanceBefore: student.CreditBalance, 
 			BalanceAfter:  student.CreditBalance,
-			Description:   "Refund for cancelled session: " + session.Title,
+			Description:   "Credit hold released for cancelled session: " + session.Title,
 			SessionID:     &session.ID,
 		}
 		_ = s.transactionRepo.Create(refundTransaction)

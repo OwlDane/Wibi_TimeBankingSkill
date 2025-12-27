@@ -22,13 +22,15 @@ type UpdateSkillRequest struct {
 }
 
 type SkillResponse struct {
-	ID             uint   `json:"id"`
-	Name           string `json:"name"`
-	Category       string `json:"category"`
-	Description    string `json:"description"`
-	Icon           string `json:"icon"`
-	TotalTeachers  int    `json:"total_teachers"`
-	TotalLearners  int    `json:"total_learners"`
+	ID             uint    `json:"id"`
+	Name           string  `json:"name"`
+	Category       string  `json:"category"`
+	Description    string  `json:"description"`
+	Icon           string  `json:"icon"`
+	TotalTeachers  int     `json:"total_teachers"`
+	TotalLearners  int     `json:"total_learners"`
+	MinRate        float64 `json:"min_rate"`
+	MaxRate        float64 `json:"max_rate"`
 	CreatedAt      time.Time `json:"created_at"`
 }
 
@@ -118,6 +120,8 @@ func ToSkillResponse(skill *models.Skill) SkillResponse {
 		Icon:           skill.Icon,
 		TotalTeachers:  skill.TotalTeachers,
 		TotalLearners:  skill.TotalLearners,
+		MinRate:        skill.MinRate,
+		MaxRate:        skill.MaxRate,
 		CreatedAt:      skill.CreatedAt,
 	}
 }

@@ -21,8 +21,8 @@ func NewSkillService(skillRepo repository.SkillRepositoryInterface, userRepo rep
 }
 
 // GetAllSkills retrieves all skills with pagination and filters
-func (s *SkillService) GetAllSkills(limit, offset int, category, search string) ([]models.Skill, int64, error) {
-	return s.skillRepo.GetAllWithFilters(limit, offset, category, search)
+func (s *SkillService) GetAllSkills(limit, offset int, category, search string, dayOfWeek *int) ([]models.Skill, int64, error) {
+	return s.skillRepo.GetAllWithFilters(limit, offset, category, search, dayOfWeek)
 }
 
 // GetSkillByID retrieves a skill by ID
